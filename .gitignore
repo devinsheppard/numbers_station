@@ -1,0 +1,25 @@
+# Build outputs
+/build/*
+!/build/.gitkeep
+/iso/*
+!/iso/.gitkeep
+/*.elf
+/*.irx
+/*.iso
+/*.map
+
+# Editor and OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+
+# Temporary files
+*.tmp
+*.log
+
+# Codex workspace files
+/work/
+/outputs/
+/.agents/
