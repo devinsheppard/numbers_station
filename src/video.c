@@ -18,6 +18,7 @@ enum {
     TEXTURE_UPLOAD_PACKET_QWORDS = 64,
     TEST_TEXTURE_WIDTH = 32,
     TEST_TEXTURE_HEIGHT = 32,
+    TEST_TEXTURE_STORAGE_WIDTH = 64,
     TEST_TEXTURE_PIXEL_COUNT = TEST_TEXTURE_WIDTH * TEST_TEXTURE_HEIGHT
 };
 
@@ -90,8 +91,8 @@ static bool test_texture_layout_is_valid(void)
         graph_vram_size(VIDEO_WIDTH, VIDEO_HEIGHT, GS_PSM_32,
                         GRAPH_ALIGN_PAGE);
     unsigned int texture_size =
-        graph_vram_size(TEST_TEXTURE_WIDTH, TEST_TEXTURE_HEIGHT, GS_PSM_32,
-                        GRAPH_ALIGN_BLOCK);
+        graph_vram_size(TEST_TEXTURE_STORAGE_WIDTH, TEST_TEXTURE_HEIGHT,
+                        GS_PSM_32, GRAPH_ALIGN_BLOCK);
     int index;
 
     if (test_texture.address + texture_size > GRAPH_VRAM_MAX_WORDS) {
@@ -192,11 +193,12 @@ bool video_initialize(void)
         }
     }
 
-    test_texture.width = TEST_TEXTURE_WIDTH;
+    /* GS texture-buffer width is encoded in 64-pixel units and cannot be 32. */
+    test_texture.width = TEST_TEXTURE_STORAGE_WIDTH;
     test_texture.psm = GS_PSM_32;
     test_texture.address =
-        graph_vram_allocate(TEST_TEXTURE_WIDTH, TEST_TEXTURE_HEIGHT, GS_PSM_32,
-                            GRAPH_ALIGN_BLOCK);
+        graph_vram_allocate(TEST_TEXTURE_STORAGE_WIDTH, TEST_TEXTURE_HEIGHT,
+                            GS_PSM_32, GRAPH_ALIGN_BLOCK);
     if ((int)test_texture.address < 0 || !test_texture_layout_is_valid()) {
         graph_vram_clear();
         dma_channel_shutdown(DMA_CHANNEL_GIF, 0);

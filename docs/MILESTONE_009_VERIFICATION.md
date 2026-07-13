@@ -14,7 +14,7 @@ out/bin/numbers_station.elf
 Both clean builds had the same SHA-256 digest:
 
 ```text
-15db7821696e70797b6b16bc3fa8fa06d493f517f721c7556c65abf6e56128cf
+ad7eceff24a01a468322eafddd58794990e37f9c15bd0063ce94eb0514485dc6
 ```
 
 The resulting ELF is 1,423,884 bytes.
@@ -29,7 +29,8 @@ diagnostic, and textured-sprite instructions.
 Code-path inspection confirms:
 
 - deterministic procedural generation of 1,024 aligned RGBA pixels;
-- a 32×32 `GS_PSM_32` source and 4,096-byte texture allocation;
+- a 32×32 `GS_PSM_32` source, 64-pixel GS storage stride, and 8,192-byte
+  texture allocation;
 - data-cache writeback before GIF DMA reads the source pixels;
 - DMA-chain texture transfer, texture-cache flush, DMA completion, and a GS
   finish fence before packet reuse;
@@ -48,16 +49,36 @@ Code-path inspection confirms:
 | --- | ---: | ---: | ---: |
 | Framebuffer 0 | `0x00000` | `0x000000` | 1,146,880 |
 | Framebuffer 1 | `0x46000` | `0x118000` | 1,146,880 |
-| Test texture | `0x8c000` | `0x230000` | 4,096 |
+| Test texture | `0x8c000` | `0x230000` | 8,192 |
 
-The final allocation ends at byte offset `0x231000`, safely below the 4 MiB GS
+The final allocation ends at byte offset `0x232000`, safely below the 4 MiB GS
 VRAM limit at `0x400000`. The texture begins exactly after framebuffer 1 and
 does not overlap either framebuffer.
 
+## Original PCSX2 failure and corrective fix
+
+The original Milestone 009 ELF was tested externally in PCSX2 and produced a
+completely black screen, including Splash and Main Menu. Milestones 007 and 008
+continued to work, isolating the failure to texture initialization.
+
+The root cause was the use of logical width 32 for `texbuffer_t.width` and for
+the texture transfer's destination width. PS2SDK converts both values to the GS
+`TBW` and `DBW` fields by dividing by 64. Passing 32 therefore encoded both
+fields as zero. The resulting invalid host-to-local transfer prevented normal
+GS completion; the initialization finish wait never completed, so application
+state rendering never began.
+
+The corrective change keeps the logical texture and transferred rectangle at
+32×32 but uses the GS minimum 64-pixel storage stride for allocation,
+`texbuffer_t.width`, and the transfer destination width. The DMA chain,
+termination, aligned source, exact 4,096-byte cache writeback range, texture
+flush, and completion fence remain unchanged because inspection found those
+parts correctly formed.
+
 ## External PCSX2 verification
 
-PCSX2 is not installed on the ARM64 build host. Visual, controller, and runtime
-claims therefore remain external checks. Follow `docs/BUILDING.md` and confirm:
+PCSX2 is not installed on the ARM64 build host. The corrected ELF therefore
+requires another external runtime pass. Follow `docs/BUILDING.md` and confirm:
 
 1. Splash transitions to Main Menu and START enters Gameplay.
 2. The sprite shows the documented checkerboard, N emblem, and four correctly

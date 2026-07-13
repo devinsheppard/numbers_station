@@ -10,7 +10,8 @@ uses a native AArch64 PS2 toolchain on Raspberry Pi 4 with Ubuntu 26.04.
 Milestone 009 retains the 640×448, 32-bit PS2SDK display mode, immediate-mode
 `libdraw` path, and two `GS_PSM_32` framebuffers. It adds one 32×32
 `GS_PSM_32` RGBA texture allocated with `GRAPH_ALIGN_BLOCK` after both
-page-aligned framebuffers.
+page-aligned framebuffers. Its logical image is 32 pixels wide, while its GS
+storage stride is the required minimum of 64 pixels.
 
 PS2SDK's allocator reports addresses and sizes in 32-bit GS words. The current
 deterministic allocation is:
@@ -19,10 +20,10 @@ deterministic allocation is:
 | --- | --- | --- | --- |
 | Framebuffer 0 | `0x00000–0x45fff` | `0x000000–0x117fff` | 1,146,880 bytes |
 | Framebuffer 1 | `0x46000–0x8bfff` | `0x118000–0x22ffff` | 1,146,880 bytes |
-| Test texture | `0x8c000–0x8c3ff` | `0x230000–0x230fff` | 4,096 bytes |
+| Test texture | `0x8c000–0x8c7ff` | `0x230000–0x231fff` | 8,192 bytes |
 
-The allocations consume 2,297,856 bytes of the GS's 4 MiB VRAM and leave
-1,896,448 bytes. There is no z-buffer or other video allocation. Initialization
+The allocations consume 2,301,952 bytes of the GS's 4 MiB VRAM and leave
+1,892,352 bytes. There is no z-buffer or other video allocation. Initialization
 fails before the application loop if allocation fails, a range exceeds GS VRAM,
 or the test texture overlaps either framebuffer.
 
@@ -43,6 +44,12 @@ uses the GS opaque value `0x80`. A 4×4 blue checkerboard, pale border and
 N-shaped emblem make the image recognizable. Four uniquely colored corners
 make its orientation testable. Generation is deterministic and requires no
 runtime files, disc access, build generator, heap allocation, or asset manager.
+
+The GS `BITBLTBUF.DBW` and `TEX0.TBW` fields express buffer width in 64-pixel
+units. The 32×32 logical image therefore uses a 64-pixel storage width. PS2SDK
+receives 32×32 as the transfer rectangle and 64 as both the destination stride
+and `texbuffer_t.width`. The reserved 64×32 VRAM region is 8,192 bytes; the
+source and transferred image data remain exactly 4,096 bytes.
 
 Upload occurs once:
 

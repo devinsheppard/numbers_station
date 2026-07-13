@@ -4,6 +4,9 @@ All notable project changes will be appended here. Do not delete previous entrie
 
 ## 2026-07-13 - Milestone 009 Texture Upload and Sprite Rendering
 
+- Corrected the GS texture storage stride to the required 64-pixel minimum;
+  using the 32-pixel logical width had encoded invalid zero-width transfer and
+  texture-buffer fields and caused a black screen in PCSX2.
 - Added a deterministic procedural 32×32 `GS_PSM_32` RGBA diagnostic texture.
 - Allocated and validated texture VRAM after both page-aligned framebuffers.
 - Added cache writeback, GIF DMA-chain upload, texture flush, and GS completion.
