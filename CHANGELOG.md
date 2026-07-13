@@ -2,6 +2,14 @@
 
 All notable project changes will be appended here. Do not delete previous entries.
 
+## 2026-07-12 - Milestone 004 Controller Input and Runtime Diagnostics
+
+- Added primary-controller initialization and non-blocking per-frame polling.
+- Added current, newly pressed, and newly released button state tracking.
+- Added disconnected-controller handling and last-pressed button names.
+- Added controller status and frame counter runtime diagnostics.
+- Documented input lifecycle and PCSX2 controller verification.
+
 ## 2026-07-12 - Milestone 003 Application Framework
 
 - Split the demonstration entry point into application and video modules.

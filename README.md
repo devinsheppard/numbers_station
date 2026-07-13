@@ -4,9 +4,10 @@ Numbers Station is a PlayStation 2 homebrew project targeting original PS2
 hardware and PCSX2. Development is native on a Raspberry Pi 4 running Ubuntu
 26.04 ARM64. Docker, Windows, WSL, and Tyra are not part of the build workflow.
 
-Milestone 003 provides a minimal application lifecycle and continuous,
-vertical-blank-synchronized render loop. The program displays the application
-framework verification screen and remains running.
+Milestone 004 adds primary-controller polling and runtime diagnostics to the
+existing application lifecycle. The screen reports connection state, frame
+count, and the most recently pressed button while the application remains
+running.
 
 ## Requirements
 
@@ -65,6 +66,7 @@ See `docs/BUILDING.md` for verification and reproducibility details.
 
 - `src/main.c` — process entry point
 - `src/application.*` — startup, loop control, and shutdown sequencing
+- `src/input.*` — primary PS2 controller initialization and button transitions
 - `src/video.*` — PS2 display initialization and frame rendering
 - `docs/` — current engineering documentation and archived milestone evidence
 - `out/` — generated objects and ELF files; ignored by Git

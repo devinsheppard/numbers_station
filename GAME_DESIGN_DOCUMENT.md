@@ -24,17 +24,17 @@ NUMBERS STATION will be developed as if it were a commercial PlayStation 2 title
 
 The game must respect PS2 hardware limitations and favor stable frame rate, predictable memory use, short loading times, and maintainable systems.
 
-## Milestone 003 Boundary
+## Milestone 004 Boundary
 
-No gameplay is implemented in Milestone 003.
+No gameplay is implemented in Milestone 004.
 
-The application framework:
+The controller diagnostic framework:
 
 - Initializes the display
 - Clears the screen
-- Runs a continuous update/render loop
-- Displays `Numbers Station`, `Milestone 003`, and
-  `Application Framework Initialized`
+- Polls the primary PS2 controller once per frame
+- Tracks current, pressed, and released button states
+- Displays connection state, frame count, and the last pressed button
 - Remains running until reset or power off
 
 It deliberately contains no gameplay or speculative engine systems.

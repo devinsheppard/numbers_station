@@ -39,3 +39,7 @@ or otherwise available on the ARM64 build host, so the Milestone 003 ELF could
 not be launched locally during this implementation. Its executable format and
 link layout match the previously validated PS2 pipeline; visual confirmation
 of the new loop remains an external runtime check.
+
+After Milestone 003 was completed, the generated ELF was successfully runtime
+validated in PCSX2. That result was supplied as the verified starting state for
+Milestone 004.

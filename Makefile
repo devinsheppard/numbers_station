@@ -14,7 +14,7 @@ EE_PREFIX := $(NATIVE_PS2DEV)/ee/bin/mips64r5900el-ps2-elf-
 CC := $(EE_PREFIX)gcc
 READELF := $(EE_PREFIX)readelf
 
-SOURCES := src/main.c src/application.c src/video.c
+SOURCES := src/main.c src/application.c src/input.c src/video.c
 OBJECTS := $(patsubst src/%.c,$(OBJ_DIR)/%.o,$(SOURCES))
 DEPENDS := $(OBJECTS:.o=.d)
 
@@ -22,7 +22,7 @@ CPPFLAGS := -D_EE -I$(PS2SDK)/ee/include -I$(PS2SDK)/common/include
 CFLAGS := -std=c11 -G0 -O2 -Wall -Wextra -Wpedantic -MMD -MP
 LDFLAGS := -T$(PS2SDK)/ee/startup/linkfile -L$(PS2SDK)/ee/lib \
 	-Wl,-zmax-page-size=128
-LDLIBS := -ldebug -lgraph -ldma -lc
+LDLIBS := -lpad -ldebug -lgraph -ldma -lc
 
 .PHONY: all clean info verify run iso
 
@@ -44,6 +44,8 @@ verify:
 		(echo "ERROR: PS2SDK debug library not found under $(PS2SDK)."; exit 1)
 	@test -f "$(PS2SDK)/ee/lib/libgraph.a" || \
 		(echo "ERROR: PS2SDK graph library not found under $(PS2SDK)."; exit 1)
+	@test -f "$(PS2SDK)/ee/lib/libpad.a" || \
+		(echo "ERROR: PS2SDK pad library not found under $(PS2SDK)."; exit 1)
 	@test -f "$(PS2_CRT0)" || \
 		(echo "ERROR: PS2 startup object not found: $(PS2_CRT0)"; exit 1)
 	@echo "Native ARM64 PS2 build environment verified."

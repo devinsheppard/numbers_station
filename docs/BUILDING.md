@@ -31,7 +31,8 @@ The target checks:
 - the host reports `aarch64`;
 - the EE compiler exists and executes;
 - `file` identifies the compiler as an AArch64 executable;
-- the PS2SDK linkfile, debug header, debug library, and graph library exist;
+- the PS2SDK linkfile, debug header, debug library, graph library, and pad
+  library exist;
 - the installed PS2 startup object exists.
 
 The compiler is invoked by its canonical name:
@@ -58,16 +59,32 @@ Generated files stay below `out/` and are never used as source inputs.
 
 ## Runtime verification
 
-The Milestone 003 ELF should display:
+The Milestone 004 ELF should display:
 
 ```text
 Numbers Station
-Milestone 003
-Application Framework Initialized
+Milestone 004
+Controller Input Initialized
+Controller: Connected
+Frame: <current frame>
+Last pressed: <button name>
 ```
 
-It then runs a vertical-blank-synchronized update/render loop until the console
-or emulator is reset or powered off.
+`Controller: Not connected` is expected when port 1 has no available pad. The
+application continues its vertical-blank-synchronized loop in either state.
+
+## PCSX2 controller verification
+
+1. Configure a controller or keyboard mapping for PCSX2 controller port 1.
+2. Launch `out/bin/numbers_station.elf` through PCSX2's ELF loader.
+3. Confirm the screen reports `Controller: Connected` and the frame counter
+   advances.
+4. Press D-pad Up, Down, Left, Right, Cross, Circle, Square, Triangle, Start,
+   Select, L1, and R1 separately. Confirm `Last pressed` changes to each name.
+5. Hold and release a button and confirm the application continues normally.
+6. Disable or disconnect the mapped controller. Confirm the status becomes
+   `Not connected`, the frame counter continues, and the application does not
+   hang or crash.
 
 Static ELF inspection confirms the PS2 MIPS executable format. Runtime claims
 must be recorded separately for PCSX2 and real hardware; a successful build is
