@@ -59,32 +59,33 @@ Generated files stay below `out/` and are never used as source inputs.
 
 ## Runtime verification
 
-The Milestone 004 ELF should display:
+The Milestone 005 ELF should initially display:
 
 ```text
 Numbers Station
-Milestone 004
-Controller Input Initialized
-Controller: Connected
-Frame: <current frame>
-Last pressed: <button name>
+Milestone 005
 ```
 
-`Controller: Not connected` is expected when port 1 has no available pad. The
-application continues its vertical-blank-synchronized loop in either state.
+After approximately three seconds it should display:
 
-## PCSX2 controller verification
+```text
+Numbers Station
+
+Main Menu
+
+Press START
+```
+
+## PCSX2 state verification
 
 1. Configure a controller or keyboard mapping for PCSX2 controller port 1.
 2. Launch `out/bin/numbers_station.elf` through PCSX2's ELF loader.
-3. Confirm the screen reports `Controller: Connected` and the frame counter
-   advances.
-4. Press D-pad Up, Down, Left, Right, Cross, Circle, Square, Triangle, Start,
-   Select, L1, and R1 separately. Confirm `Last pressed` changes to each name.
-5. Hold and release a button and confirm the application continues normally.
-6. Disable or disconnect the mapped controller. Confirm the status becomes
-   `Not connected`, the frame counter continues, and the application does not
-   hang or crash.
+3. Confirm Splash appears immediately and Main Menu replaces it after about
+   three seconds without input.
+4. Press START once and confirm `Gameplay not yet implemented.` appears.
+5. Hold and release START. Confirm no new state begins and Main Menu remains
+   active.
+6. Leave the application running and confirm it remains stable.
 
 Static ELF inspection confirms the PS2 MIPS executable format. Runtime claims
 must be recorded separately for PCSX2 and real hardware; a successful build is

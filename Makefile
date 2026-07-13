@@ -14,7 +14,8 @@ EE_PREFIX := $(NATIVE_PS2DEV)/ee/bin/mips64r5900el-ps2-elf-
 CC := $(EE_PREFIX)gcc
 READELF := $(EE_PREFIX)readelf
 
-SOURCES := src/main.c src/application.c src/input.c src/video.c
+SOURCES := src/main.c src/application.c src/input.c src/video.c \
+	src/state_manager.c src/splash_state.c src/main_menu_state.c
 OBJECTS := $(patsubst src/%.c,$(OBJ_DIR)/%.o,$(SOURCES))
 DEPENDS := $(OBJECTS:.o=.d)
 

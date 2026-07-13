@@ -7,74 +7,72 @@ uses a native AArch64 PS2 toolchain on Raspberry Pi 4 with Ubuntu 26.04.
 
 ## Application architecture
 
-Milestone 004 uses four small modules:
+Milestone 005 retains the existing application, input, and video modules and
+adds only the state responsibilities currently required:
 
-- `main` delegates process execution to the application.
-- `application` owns startup, running state, frame count, update/render
-  sequencing, and orderly shutdown.
-- `input` owns PS2 controller modules, port 0/slot 0, pad DMA storage, polling,
-  and button state transitions.
-- `video` owns display initialization, vertical-blank synchronization, and the
-  diagnostic screen.
+- `state_manager` owns the identity and lifecycle of the single active state.
+- `splash_state` owns its timer and launch-screen rendering.
+- `main_menu_state` owns START handling, menu rendering, and the placeholder
+  message flag.
 
-There is no generic engine, device abstraction, remapping layer, gameplay
-action map, scene system, or other speculative input architecture.
+The manager uses an explicit two-value state enum and switch dispatch. It does
+not implement a stack, registry, event bus, dynamic allocation, factories, or
+support for hypothetical states.
 
 ## Startup sequence
 
-1. `main` calls `application_run`.
-2. The application initializes SIF RPC.
-3. The video module initializes PS2SDK's debug display.
-4. The input module loads `rom0:SIO2MAN` and `rom0:PADMAN`.
-5. The input module initializes `libpad` and opens controller port 0, slot 0,
-   using a 256-byte, 64-byte-aligned DMA buffer.
-6. The application enters the running state only after subsystem startup
-   succeeds.
+1. `main` enters the application.
+2. The application initializes SIF RPC, video, and controller input.
+3. The state manager selects and initializes Splash.
+4. The application enters its continuous update/render loop.
 
-A missing controller is not a startup error. The opened port remains available
-for later connection and the screen reports `Not connected` until a stable pad
-can be read.
+## State lifecycle
 
-## Polling and state transitions
-
-Input is polled exactly once during each application update. `padRead` is only
-called when `padGetState` reports `PAD_STATE_STABLE` or
-`PAD_STATE_FINDCTP1`. Other states return immediately without waiting.
-
-PS2 pads report pressed buttons as zero bits. The input module normalizes that
-into an active-high 16-bit mask and calculates:
+Each concrete state owns four operations:
 
 ```text
-pressed  = current AND NOT previous
-released = previous AND NOT current
+initialize
+update
+render
+shutdown
 ```
 
-When a controller becomes unavailable, current and pressed are cleared, held
-buttons appear once in released, and the last-pressed label is preserved.
-Repeated disconnected frames remain empty and non-blocking.
+For a transition, the manager calls the active state's shutdown operation,
+changes the active enum, and initializes the new state. Update and render are
+then dispatched only to that state. Shutdown dispatches once to the current
+state before application subsystems are stopped.
 
-The label table covers D-pad directions, Cross, Circle, Square, Triangle,
-Start, Select, L1, R1, L2, R2, L3, and R3. When multiple buttons become pressed
-in one poll, the first matching table entry becomes the diagnostic label.
+## Splash state
 
-## Game loop
+Splash initialization records `GetTimerSystemTime`. Update compares elapsed
+PS2 bus-clock time against three seconds, avoiding PAL/NTSC frame-rate
+assumptions. Render displays the project title and milestone identifier. Once
+the duration expires, the manager transitions automatically to Main Menu.
 
-Each iteration performs:
+## Main Menu state
+
+Main Menu initialization clears its placeholder flag. Update checks the input
+module's newly pressed mask for `PAD_START`; current/held input is intentionally
+not used. Pressing START sets the flag, and render adds:
 
 ```text
-poll controller and update transitions
-increment frame counter
-wait for vertical blank and render diagnostics
+Gameplay not yet implemented.
 ```
 
-Input does not stop the application. The existing shutdown path remains for a
-future milestone; current execution continues until reset or power-off.
+No state transition or gameplay startup occurs. Main Menu remains active.
 
-## Shutdown sequence
+## Application loop integration
 
-If future logic clears the application running flag, the controller port is
-closed, `libpad` is ended, the display is cleared, and the application returns
-successfully.
+Each frame performs:
+
+```text
+poll controller
+update active state
+render active state
+```
+
+Each state begins its frame through the video module, which waits for vertical
+blank and clears the display before state-owned text is drawn.
 
 ## Dependencies
 

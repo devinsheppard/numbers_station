@@ -2,11 +2,9 @@
 #define NUMBERS_STATION_VIDEO_H
 
 #include <stdbool.h>
-#include <stdint.h>
-
 bool video_initialize(void);
-void video_render(bool controller_connected, uint64_t frame_count,
-                  const char *last_pressed_button);
+void video_begin_frame(void);
+void video_draw_text(int x, int y, const char *text);
 void video_shutdown(void);
 
 #endif

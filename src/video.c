@@ -10,19 +10,16 @@ bool video_initialize(void)
     return true;
 }
 
-void video_render(bool controller_connected, uint64_t frame_count,
-                  const char *last_pressed_button)
+void video_begin_frame(void)
 {
     graph_wait_vsync();
     scr_clear();
-    scr_setXY(10, 10);
-    scr_printf("Numbers Station\n");
-    scr_printf("Milestone 004\n");
-    scr_printf("Controller Input Initialized\n\n");
-    scr_printf("Controller: %s\n",
-               controller_connected ? "Connected" : "Not connected");
-    scr_printf("Frame: %llu\n", (unsigned long long)frame_count);
-    scr_printf("Last pressed: %s\n", last_pressed_button);
+}
+
+void video_draw_text(int x, int y, const char *text)
+{
+    scr_setXY(x, y);
+    scr_printf("%s", text);
 }
 
 void video_shutdown(void)

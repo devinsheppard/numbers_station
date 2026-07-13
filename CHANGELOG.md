@@ -2,6 +2,14 @@
 
 All notable project changes will be appended here. Do not delete previous entries.
 
+## 2026-07-12 - Milestone 005 Application State Manager
+
+- Added a minimal single-active-state manager.
+- Added timed Splash and controller-driven Main Menu states.
+- Added clean state initialization, update, rendering, and shutdown dispatch.
+- Added the START-triggered gameplay placeholder without starting gameplay.
+- Documented state lifecycle, transitions, and PCSX2 verification.
+
 ## 2026-07-12 - Milestone 004 Controller Input and Runtime Diagnostics
 
 - Added primary-controller initialization and non-blocking per-frame polling.

@@ -1,15 +1,14 @@
 #include "application.h"
 
 #include <stdbool.h>
-#include <stdint.h>
 #include <sifrpc.h>
 
 #include "input.h"
+#include "state_manager.h"
 #include "video.h"
 
 typedef struct Application {
     bool running;
-    uint64_t frame_count;
 } Application;
 
 static bool application_startup(Application *application)
@@ -25,27 +24,26 @@ static bool application_startup(Application *application)
         return false;
     }
 
+    state_manager_initialize();
+
     application->running = true;
-    application->frame_count = 0;
     return true;
 }
 
-static void application_update(Application *application)
+static void application_update(void)
 {
     input_update();
-    ++application->frame_count;
+    state_manager_update();
 }
 
-static void application_render(const Application *application)
+static void application_render(void)
 {
-    const InputState *input_state = input_get_state();
-
-    video_render(input_state->connected, application->frame_count,
-                 input_state->last_pressed_button);
+    state_manager_render();
 }
 
 static void application_shutdown(void)
 {
+    state_manager_shutdown();
     input_shutdown();
     video_shutdown();
 }
@@ -59,8 +57,8 @@ int application_run(void)
     }
 
     while (application.running) {
-        application_update(&application);
-        application_render(&application);
+        application_update();
+        application_render();
     }
 
     application_shutdown();
