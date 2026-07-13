@@ -31,7 +31,7 @@ The target checks:
 - the host reports `aarch64`;
 - the EE compiler exists and executes;
 - `file` identifies the compiler as an AArch64 executable;
-- the PS2SDK linkfile, debug header, and debug library exist.
+- the PS2SDK linkfile, debug header, debug library, and graph library exist;
 - the installed PS2 startup object exists.
 
 The compiler is invoked by its canonical name:
@@ -58,15 +58,16 @@ Generated files stay below `out/` and are never used as source inputs.
 
 ## Runtime verification
 
-The ELF should display:
+The Milestone 003 ELF should display:
 
 ```text
 Numbers Station
-Native ARM64 Build Verified
+Milestone 003
+Application Framework Initialized
 ```
 
-It then remains in an intentional infinite loop until the console or emulator
-is reset or powered off.
+It then runs a vertical-blank-synchronized update/render loop until the console
+or emulator is reset or powered off.
 
 Static ELF inspection confirms the PS2 MIPS executable format. Runtime claims
 must be recorded separately for PCSX2 and real hardware; a successful build is

@@ -2,6 +2,13 @@
 
 All notable project changes will be appended here. Do not delete previous entries.
 
+## 2026-07-12 - Milestone 003 Application Framework
+
+- Split the demonstration entry point into application and video modules.
+- Added explicit startup, update/render loop, and shutdown sequencing.
+- Synchronized rendering to PS2 vertical blank through PS2SDK `libgraph`.
+- Updated architecture, lifecycle, build, and verification documentation.
+
 ## 2026-07-12 - Milestone 002 Native ARM64 Build Foundation
 
 - Replaced the blocked Windows/WSL build plan with a native AArch64 build.

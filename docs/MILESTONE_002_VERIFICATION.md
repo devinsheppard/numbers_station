@@ -47,3 +47,7 @@ PCSX2 was not installed on the build host, and no real-hardware launch was
 performed during this milestone. The executable format, R5900 flags, link
 layout, and static linkage are suitable for PS2 loading, but runtime behavior
 is not claimed as tested until the ELF is launched in PCSX2 or on hardware.
+
+After Milestone 002 was completed, the generated ELF was successfully launched
+and executed in PCSX2. That result was supplied as the verified starting state
+for Milestone 003.

@@ -24,18 +24,20 @@ NUMBERS STATION will be developed as if it were a commercial PlayStation 2 title
 
 The game must respect PS2 hardware limitations and favor stable frame rate, predictable memory use, short loading times, and maintainable systems.
 
-## Milestone 002 Boundary
+## Milestone 003 Boundary
 
-No gameplay is implemented in Milestone 002.
+No gameplay is implemented in Milestone 003.
 
-The native build foundation is a minimal PS2 application that:
+The application framework:
 
 - Initializes the display
 - Clears the screen
-- Displays `Numbers Station` and `Native ARM64 Build Verified`
+- Runs a continuous update/render loop
+- Displays `Numbers Station`, `Milestone 003`, and
+  `Application Framework Initialized`
 - Remains running until reset or power off
 
-It deliberately contains no gameplay or engine systems.
+It deliberately contains no gameplay or speculative engine systems.
 
 ## Revision Log
 

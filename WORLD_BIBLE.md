@@ -2,7 +2,7 @@
 
 ## Project Boundary
 
-World implementation is not part of Milestone 002.
+World implementation is not part of Milestone 003.
 
 This document is reserved for locations, factions, timeline, environmental rules, symbolic motifs, and continuity constraints.
 

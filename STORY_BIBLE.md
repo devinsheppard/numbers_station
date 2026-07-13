@@ -2,7 +2,7 @@
 
 ## Project Boundary
 
-Story implementation is not part of Milestone 002.
+Story implementation is not part of Milestone 003.
 
 This document is reserved for narrative structure, characters, themes, mystery rules, endings, and continuity constraints.
 
