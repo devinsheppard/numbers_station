@@ -59,11 +59,11 @@ Generated files stay below `out/` and are never used as source inputs.
 
 ## Runtime verification
 
-The Milestone 007 ELF should initially display:
+The Milestone 008 ELF should initially display:
 
 ```text
 Numbers Station
-Milestone 007
+Milestone 008
 ```
 
 After approximately three seconds it should display:
@@ -76,14 +76,14 @@ Main Menu
 Press START
 ```
 
-## PCSX2 Gameplay verification
+## PCSX2 double-buffer verification
 
 1. Configure a controller or keyboard mapping for PCSX2 controller port 1.
 2. Launch `out/bin/numbers_station.elf` through PCSX2's ELF loader.
 3. Confirm Splash appears immediately and Main Menu replaces it after about
    three seconds without input.
-4. Press START once and confirm Gameplay immediately displays `Pixel Rendering
-   Active`, player X/Y pixel coordinates, bounded delta time, D-pad
+4. Press START once and confirm Gameplay displays `Double Buffering Active`,
+   player X/Y pixel coordinates, bounded delta time, buffer indices, D-pad
    instructions, and a filled colored rectangle.
 5. Hold each D-pad direction separately. Confirm the rectangle and matching
    coordinate move smoothly in all four directions.
@@ -91,10 +91,14 @@ Press START
    both axes and opposing inputs cancel on their axis.
 7. Hold each direction against its boundary. Confirm X remains within `0–616`,
    Y remains within `0–424`, and the entire 24×24 rectangle remains visible.
-8. Pause or stall emulation temporarily, then resume. Confirm displayed delta
+8. Confirm display/draw indices are always opposite and alternate `0/1` then
+   `1/0` as frames are presented.
+9. Watch Splash, Main Menu, diagnostics, and the moving rectangle for tearing,
+   partial clears, flicker, or alternating missing elements.
+10. Pause or stall emulation temporarily, then resume. Confirm displayed delta
    does not exceed 100 ms and the player advances no more than 18 pixels from
-   that update.
-9. Confirm Gameplay remains active after movement and START does not exit it.
+   that update, buffer alternation resumes, and the frame remains complete.
+11. Confirm Gameplay remains active after movement and START does not exit it.
 
 Static ELF inspection confirms the PS2 MIPS executable format. Runtime claims
 must be recorded separately for PCSX2 and real hardware; a successful build is

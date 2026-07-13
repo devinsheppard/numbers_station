@@ -5,76 +5,81 @@
 Numbers Station targets original PlayStation 2 hardware and PCSX2. Development
 uses a native AArch64 PS2 toolchain on Raspberry Pi 4 with Ubuntu 26.04.
 
-## Rendering approach
+## Framebuffer layout
 
-Milestone 007 uses PS2SDK `libdraw`, `libpacket`, `libgraph`, and GIF DMA for a
-minimal immediate-mode 2D path. The video module configures a 640×448, 32-bit
-framebuffer at GS address zero, matching the existing PS2SDK debug display. A
-single reusable 64-qword packet is sufficient for current operations.
+Milestone 008 retains the 640×448, 32-bit PS2SDK display mode and immediate-mode
+`libdraw` primitives. The video module resets PS2SDK's VRAM allocator and
+allocates two `GS_PSM_32` framebuffers with `GRAPH_ALIGN_PAGE` alignment.
 
-At startup, the existing debug display initializes the GS and text path. The
-video module then initializes GIF DMA and submits `draw_setup_environment` for
-the same framebuffer with depth buffering disabled.
+Each framebuffer contains 286,720 pixels and consumes 1,146,880 bytes. Together
+they consume 2,293,760 bytes of the GS's 4 MiB VRAM. There is no z-buffer,
+texture storage, or other video allocation.
 
-Each frame:
+At initialization:
 
-1. Wait for vertical blank.
-2. Clear the framebuffer to a dark solid color with `draw_clear`.
-3. Submit a filled rectangle with `draw_rect_filled` when Gameplay renders the
-   player.
-4. Draw diagnostic text through PS2SDK `libdebug` on the same framebuffer.
+- framebuffer 1 is attached to the GS read circuit for display;
+- framebuffer 0 is selected as the drawing target;
+- both framebuffers are cleared before the first presentation.
 
-Every primitive packet ends with `draw_finish` and is complete before its
-storage is reused. There is no render queue, material, texture, sprite, camera,
-or general renderer layer.
+The indices describe roles, not fixed ownership. They alternate after every
+presented frame.
 
-## Frame timing
+## Frame lifecycle
 
-Gameplay owns one `FrameTimer`. Initialization records
-`GetTimerSystemTime`; each Gameplay update subtracts the previous PS2 bus-clock
-value and converts the elapsed ticks to seconds.
-
-Elapsed time is capped at 100 milliseconds before conversion. An emulator
-pause or host stall therefore cannot apply more than 0.1 seconds of movement
-in one update. The diagnostic screen displays the bounded delta in integer
-milliseconds.
-
-This is a Gameplay-local frame timer, not a scheduler, profiler, or global time
-service.
-
-## Player movement
-
-Gameplay continues to own one `Player`. Its state is now:
+All three application states use the same explicit lifecycle:
 
 ```text
-floating-point X/Y pixel position
-24×24 pixel dimensions
-movement speed of 180 pixels per second
+video_begin_frame
+draw primitives and diagnostic text
+video_present_frame
 ```
 
-Held D-pad input builds a direction vector with components `-1`, `0`, or `1`.
-When both axes are nonzero, both are multiplied by `0.70710678` (`1/√2`) before
-applying speed and delta time. Diagonal and cardinal movement therefore have
-the same effective speed.
+`video_begin_frame` clears only the active draw buffer. Rectangle and clear
+operations reuse one 64-qword packet and complete before that packet is reused.
+PS2SDK debug text draws through the currently selected GS drawing context, so
+it lands in the same hidden buffer as the primitives.
 
-After movement, the top-left position is clamped to:
+`video_present_frame` performs:
 
-```text
-X: 0–616
-Y: 0–424
-```
+1. Submit a `draw_finish` fence after all primitive and text commands.
+2. Wait until the GS reports that fence complete.
+3. Wait for vertical blank.
+4. Point the filtered GS read circuit at the completed draw framebuffer.
+5. Make that index the display index.
+6. Make the previous display index the next draw index.
+7. Submit `draw_framebuffer` and wait for completion so subsequent drawing
+   targets the hidden buffer.
 
-These limits subtract the 24-pixel dimensions from the 640×448 framebuffer,
-keeping the entire rectangle visible. Coordinates are truncated to integers
-only for display; movement retains floating-point precision.
+The next `video_begin_frame` then clears that new draw target. The display
+buffer is never cleared or modified while it is being scanned out.
 
-## State integration
+## Synchronization decisions
 
-Splash and Main Menu keep their existing lifecycles. Newly pressed START still
-requests Main Menu → Gameplay through the state manager. Gameplay initializes
-the player and timer, updates both once per frame, draws the background,
-rectangle, and diagnostics once per frame, and remains active until reset or
-power-off.
+`submit_packet` calls `dma_wait_fast` before each send and `draw_wait_finish`
+after the packet's finish tag. This deliberately favors correctness and clear
+packet ownership over pipelined throughput. Packet memory is never modified
+while DMA or the GS may still consume it.
+
+The display-buffer switch occurs only after drawing completion and during
+vertical blank. This is the minimum reliable swap sequence for the current
+single-context, immediate-mode path.
+
+## Runtime diagnostics
+
+Gameplay displays the display and draw indices captured while building the
+frame. Because those roles swap at presentation, both values alternate between
+zero and one and remain opposite. The diagnostic text itself becomes visible
+as part of the completed draw buffer on that presentation.
+
+Existing delta-time movement, 100 ms stall clamp, diagonal normalization,
+24×24 player rectangle, and `[0,616] × [0,424]` boundary clamping are unchanged.
+
+## Scope
+
+The video module exposes only frame begin, filled rectangle, diagnostic text,
+frame present, buffer-index queries, and shutdown. It has no render queue,
+materials, assets, textures, sprites, cameras, scene graph, or generalized
+graphics engine.
 
 ## Dependencies
 

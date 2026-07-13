@@ -2,6 +2,15 @@
 
 All notable project changes will be appended here. Do not delete previous entries.
 
+## 2026-07-13 - Milestone 008 Double-Buffered Frame Presentation
+
+- Allocated two page-aligned 640×448, 32-bit GS framebuffers.
+- Added explicit begin, draw, finish, vertical-blank, swap, and retarget flow.
+- Ensured packet completion before packet storage or framebuffer role reuse.
+- Added alternating display/draw index diagnostics.
+- Applied the presentation lifecycle to Splash, Main Menu, and Gameplay.
+- Documented VRAM layout, synchronization, swapping, and PCSX2 verification.
+
 ## 2026-07-12 - Milestone 007 Pixel Rendering and Delta-Time Movement
 
 - Added PS2SDK immediate-mode framebuffer clearing and filled rectangles.

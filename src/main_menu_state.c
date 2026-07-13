@@ -26,6 +26,7 @@ void main_menu_state_render(void)
 {
     video_begin_frame();
     video_draw_text(10, 10, "Numbers Station\n\nMain Menu\n\nPress START");
+    video_present_frame();
 }
 
 void main_menu_state_shutdown(void)
