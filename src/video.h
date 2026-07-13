@@ -4,6 +4,9 @@
 #include <stdbool.h>
 bool video_initialize(void);
 void video_begin_frame(void);
+void video_draw_filled_rect(float x, float y, float width, float height,
+                            unsigned char red, unsigned char green,
+                            unsigned char blue);
 void video_draw_text(int x, int y, const char *format, ...)
     __attribute__((format(printf, 3, 4)));
 void video_shutdown(void);

@@ -5,16 +5,13 @@
 #include "input.h"
 #include "video.h"
 
-enum {
-    PLAYER_START_X = 40,
-    PLAYER_START_Y = 18,
-    PLAYER_MIN_X = 1,
-    PLAYER_MAX_X = 78,
-    PLAYER_MIN_Y = 10,
-    PLAYER_MAX_Y = 27
-};
+static const float SCREEN_WIDTH = 640.0f;
+static const float SCREEN_HEIGHT = 448.0f;
+static const float PLAYER_SIZE = 24.0f;
+static const float PLAYER_SPEED = 180.0f;
+static const float DIAGONAL_NORMALIZATION = 0.70710678f;
 
-static int clamp(int value, int minimum, int maximum)
+static float clamp(float value, float minimum, float maximum)
 {
     if (value < minimum) {
         return minimum;
@@ -29,33 +26,48 @@ static int clamp(int value, int minimum, int maximum)
 
 void player_initialize(Player *player)
 {
-    player->x = PLAYER_START_X;
-    player->y = PLAYER_START_Y;
-    player->movement_speed = 1;
+    player->width = PLAYER_SIZE;
+    player->height = PLAYER_SIZE;
+    player->x = (SCREEN_WIDTH - player->width) * 0.5f;
+    player->y = (SCREEN_HEIGHT - player->height) * 0.5f;
+    player->movement_speed = PLAYER_SPEED;
 }
 
-void player_update(Player *player)
+void player_update(Player *player, float delta_seconds)
 {
     const InputState *input_state = input_get_state();
+    float direction_x = 0.0f;
+    float direction_y = 0.0f;
+    float normalization = 1.0f;
 
-    if ((input_state->current_buttons & PAD_UP) != 0) {
-        player->y -= player->movement_speed;
-    }
-    if ((input_state->current_buttons & PAD_DOWN) != 0) {
-        player->y += player->movement_speed;
-    }
     if ((input_state->current_buttons & PAD_LEFT) != 0) {
-        player->x -= player->movement_speed;
+        direction_x -= 1.0f;
     }
     if ((input_state->current_buttons & PAD_RIGHT) != 0) {
-        player->x += player->movement_speed;
+        direction_x += 1.0f;
+    }
+    if ((input_state->current_buttons & PAD_UP) != 0) {
+        direction_y -= 1.0f;
+    }
+    if ((input_state->current_buttons & PAD_DOWN) != 0) {
+        direction_y += 1.0f;
     }
 
-    player->x = clamp(player->x, PLAYER_MIN_X, PLAYER_MAX_X);
-    player->y = clamp(player->y, PLAYER_MIN_Y, PLAYER_MAX_Y);
+    if (direction_x != 0.0f && direction_y != 0.0f) {
+        normalization = DIAGONAL_NORMALIZATION;
+    }
+
+    player->x += direction_x * normalization * player->movement_speed *
+                 delta_seconds;
+    player->y += direction_y * normalization * player->movement_speed *
+                 delta_seconds;
+
+    player->x = clamp(player->x, 0.0f, SCREEN_WIDTH - player->width);
+    player->y = clamp(player->y, 0.0f, SCREEN_HEIGHT - player->height);
 }
 
 void player_render(const Player *player)
 {
-    video_draw_text(player->x, player->y, "@");
+    video_draw_filled_rect(player->x, player->y, player->width, player->height,
+                           0x30, 0xb0, 0xd0);
 }

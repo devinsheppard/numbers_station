@@ -2,6 +2,15 @@
 
 All notable project changes will be appended here. Do not delete previous entries.
 
+## 2026-07-12 - Milestone 007 Pixel Rendering and Delta-Time Movement
+
+- Added PS2SDK immediate-mode framebuffer clearing and filled rectangles.
+- Converted the player from text cells to floating-point pixel coordinates.
+- Added PS2 system-clock delta timing with a 100 ms stall cap.
+- Added frame-rate-independent movement and normalized diagonals.
+- Clamped the complete 24×24 player rectangle inside 640×448 pixels.
+- Documented rendering, timing, boundaries, and PCSX2 verification.
+
 ## 2026-07-12 - Milestone 006 Gameplay State and Player Movement
 
 - Added Main Menu to Gameplay transition on newly pressed START.

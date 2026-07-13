@@ -16,7 +16,7 @@ READELF := $(EE_PREFIX)readelf
 
 SOURCES := src/main.c src/application.c src/input.c src/video.c \
 	src/state_manager.c src/splash_state.c src/main_menu_state.c \
-	src/gameplay_state.c src/player.c
+	src/gameplay_state.c src/player.c src/frame_timer.c
 OBJECTS := $(patsubst src/%.c,$(OBJ_DIR)/%.o,$(SOURCES))
 DEPENDS := $(OBJECTS:.o=.d)
 
@@ -24,7 +24,7 @@ CPPFLAGS := -D_EE -I$(PS2SDK)/ee/include -I$(PS2SDK)/common/include
 CFLAGS := -std=c11 -G0 -O2 -Wall -Wextra -Wpedantic -MMD -MP
 LDFLAGS := -T$(PS2SDK)/ee/startup/linkfile -L$(PS2SDK)/ee/lib \
 	-Wl,-zmax-page-size=128
-LDLIBS := -lpad -ldebug -lgraph -ldma -lc
+LDLIBS := -lpad -ldebug -ldraw -lpacket -lgraph -ldma -lc
 
 .PHONY: all clean info verify run iso
 
@@ -48,6 +48,10 @@ verify:
 		(echo "ERROR: PS2SDK graph library not found under $(PS2SDK)."; exit 1)
 	@test -f "$(PS2SDK)/ee/lib/libpad.a" || \
 		(echo "ERROR: PS2SDK pad library not found under $(PS2SDK)."; exit 1)
+	@test -f "$(PS2SDK)/ee/lib/libdraw.a" || \
+		(echo "ERROR: PS2SDK draw library not found under $(PS2SDK)."; exit 1)
+	@test -f "$(PS2SDK)/ee/lib/libpacket.a" || \
+		(echo "ERROR: PS2SDK packet library not found under $(PS2SDK)."; exit 1)
 	@test -f "$(PS2_CRT0)" || \
 		(echo "ERROR: PS2 startup object not found: $(PS2_CRT0)"; exit 1)
 	@echo "Native ARM64 PS2 build environment verified."

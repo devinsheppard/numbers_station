@@ -31,8 +31,8 @@ The target checks:
 - the host reports `aarch64`;
 - the EE compiler exists and executes;
 - `file` identifies the compiler as an AArch64 executable;
-- the PS2SDK linkfile, debug header, debug library, graph library, and pad
-  library exist;
+- the PS2SDK linkfile, debug header, debug, graph, pad, and draw libraries
+  exist;
 - the installed PS2 startup object exists.
 
 The compiler is invoked by its canonical name:
@@ -59,11 +59,11 @@ Generated files stay below `out/` and are never used as source inputs.
 
 ## Runtime verification
 
-The Milestone 006 ELF should initially display:
+The Milestone 007 ELF should initially display:
 
 ```text
 Numbers Station
-Milestone 006
+Milestone 007
 ```
 
 After approximately three seconds it should display:
@@ -82,15 +82,19 @@ Press START
 2. Launch `out/bin/numbers_station.elf` through PCSX2's ELF loader.
 3. Confirm Splash appears immediately and Main Menu replaces it after about
    three seconds without input.
-4. Press START once and confirm Gameplay immediately displays `Gameplay State
-   Active`, player X/Y coordinates, D-pad instructions, and an `@` marker.
-5. Hold each D-pad direction separately. Confirm the marker and matching
-   coordinate move in all four directions.
+4. Press START once and confirm Gameplay immediately displays `Pixel Rendering
+   Active`, player X/Y pixel coordinates, bounded delta time, D-pad
+   instructions, and a filled colored rectangle.
+5. Hold each D-pad direction separately. Confirm the rectangle and matching
+   coordinate move smoothly in all four directions.
 6. Test diagonal and opposing directions. Confirm diagonal movement changes
    both axes and opposing inputs cancel on their axis.
-7. Hold each direction against its boundary. Confirm X remains within `1–78`,
-   Y remains within `10–27`, and the marker remains visible.
-8. Confirm Gameplay remains active after movement and START does not exit it.
+7. Hold each direction against its boundary. Confirm X remains within `0–616`,
+   Y remains within `0–424`, and the entire 24×24 rectangle remains visible.
+8. Pause or stall emulation temporarily, then resume. Confirm displayed delta
+   does not exceed 100 ms and the player advances no more than 18 pixels from
+   that update.
+9. Confirm Gameplay remains active after movement and START does not exit it.
 
 Static ELF inspection confirms the PS2 MIPS executable format. Runtime claims
 must be recorded separately for PCSX2 and real hardware; a successful build is
