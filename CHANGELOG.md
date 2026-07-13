@@ -2,6 +2,16 @@
 
 All notable project changes will be appended here. Do not delete previous entries.
 
+## 2026-07-13 - Milestone 009 Texture Upload and Sprite Rendering
+
+- Added a deterministic procedural 32×32 `GS_PSM_32` RGBA diagnostic texture.
+- Allocated and validated texture VRAM after both page-aligned framebuffers.
+- Added cache writeback, GIF DMA-chain upload, texture flush, and GS completion.
+- Added nearest-filtered, clamped textured-quad drawing with explicit state.
+- Replaced the player rectangle with the textured test sprite.
+- Added texture dimensions and pixel-format runtime diagnostics.
+- Documented texture generation, VRAM layout, rendering, and external checks.
+
 ## 2026-07-13 - Milestone 008 Double-Buffered Frame Presentation
 
 - Allocated two page-aligned 640×448, 32-bit GS framebuffers.

@@ -8,18 +8,105 @@
 #include <packet.h>
 #include <stdarg.h>
 
+extern void SyncDCache(void *start, void *end);
+
 enum {
     VIDEO_WIDTH = 640,
     VIDEO_HEIGHT = 448,
     FRAMEBUFFER_COUNT = 2,
-    DRAW_PACKET_QWORDS = 64
+    DRAW_PACKET_QWORDS = 64,
+    TEXTURE_UPLOAD_PACKET_QWORDS = 64,
+    TEST_TEXTURE_WIDTH = 32,
+    TEST_TEXTURE_HEIGHT = 32,
+    TEST_TEXTURE_PIXEL_COUNT = TEST_TEXTURE_WIDTH * TEST_TEXTURE_HEIGHT
 };
 
 static framebuffer_t framebuffers[FRAMEBUFFER_COUNT];
 static zbuffer_t zbuffer;
+static texbuffer_t test_texture;
 static packet_t *draw_packet;
 static int display_buffer_index;
 static int draw_buffer_index;
+static unsigned int test_texture_pixels[TEST_TEXTURE_PIXEL_COUNT]
+    __attribute__((aligned(64)));
+
+static unsigned int rgba(unsigned char red, unsigned char green,
+                         unsigned char blue)
+{
+    return (unsigned int)red | ((unsigned int)green << 8) |
+           ((unsigned int)blue << 16) | (0x80u << 24);
+}
+
+static void generate_test_texture(void)
+{
+    int x;
+    int y;
+
+    for (y = 0; y < TEST_TEXTURE_HEIGHT; ++y) {
+        for (x = 0; x < TEST_TEXTURE_WIDTH; ++x) {
+            unsigned int pixel;
+            int checker = ((x / 4) + (y / 4)) & 1;
+            bool border = x < 2 || x >= TEST_TEXTURE_WIDTH - 2 || y < 2 ||
+                          y >= TEST_TEXTURE_HEIGHT - 2;
+            bool emblem = (x >= 8 && x <= 10) || (x >= 21 && x <= 23) ||
+                           (x >= 9 && x <= 22 && y >= x - 1 && y <= x + 1);
+
+            pixel = checker ? rgba(0x10, 0x50, 0x78) :
+                              rgba(0x08, 0x18, 0x30);
+            if (border || emblem) {
+                pixel = rgba(0xe8, 0xe0, 0x90);
+            }
+
+            /* Distinct corners make texture orientation easy to verify. */
+            if (x < 6 && y < 6) {
+                pixel = rgba(0xe0, 0x30, 0x30);
+            } else if (x >= 26 && y < 6) {
+                pixel = rgba(0x30, 0xd0, 0x50);
+            } else if (x < 6 && y >= 26) {
+                pixel = rgba(0x30, 0x60, 0xe0);
+            } else if (x >= 26 && y >= 26) {
+                pixel = rgba(0xe0, 0xc0, 0x30);
+            }
+
+            test_texture_pixels[y * TEST_TEXTURE_WIDTH + x] = pixel;
+        }
+    }
+
+    SyncDCache(test_texture_pixels,
+               test_texture_pixels + TEST_TEXTURE_PIXEL_COUNT);
+}
+
+static bool ranges_overlap(unsigned int first_address, unsigned int first_size,
+                           unsigned int second_address,
+                           unsigned int second_size)
+{
+    return first_address < second_address + second_size &&
+           second_address < first_address + first_size;
+}
+
+static bool test_texture_layout_is_valid(void)
+{
+    unsigned int framebuffer_size =
+        graph_vram_size(VIDEO_WIDTH, VIDEO_HEIGHT, GS_PSM_32,
+                        GRAPH_ALIGN_PAGE);
+    unsigned int texture_size =
+        graph_vram_size(TEST_TEXTURE_WIDTH, TEST_TEXTURE_HEIGHT, GS_PSM_32,
+                        GRAPH_ALIGN_BLOCK);
+    int index;
+
+    if (test_texture.address + texture_size > GRAPH_VRAM_MAX_WORDS) {
+        return false;
+    }
+
+    for (index = 0; index < FRAMEBUFFER_COUNT; ++index) {
+        if (ranges_overlap(test_texture.address, texture_size,
+                           framebuffers[index].address, framebuffer_size)) {
+            return false;
+        }
+    }
+
+    return true;
+}
 
 static void submit_packet(qword_t *end)
 {
@@ -48,6 +135,36 @@ static void clear_draw_buffer(void)
     submit_packet(q);
 }
 
+static bool upload_test_texture(void)
+{
+    packet_t *upload_packet =
+        packet_init(TEXTURE_UPLOAD_PACKET_QWORDS, PACKET_NORMAL);
+    qword_t *q;
+
+    if (upload_packet == NULL) {
+        return false;
+    }
+
+    generate_test_texture();
+    q = upload_packet->data;
+    q = draw_texture_transfer(q, test_texture_pixels, TEST_TEXTURE_WIDTH,
+                              TEST_TEXTURE_HEIGHT, GS_PSM_32,
+                              test_texture.address, test_texture.width);
+    q = draw_texture_flush(q);
+
+    dma_wait_fast();
+    dma_channel_send_chain(DMA_CHANNEL_GIF, upload_packet->data,
+                           q - upload_packet->data, 0, 0);
+    dma_wait_fast();
+    packet_free(upload_packet);
+
+    q = draw_packet->data;
+    q = draw_texture_flush(q);
+    q = draw_finish(q);
+    submit_packet(q);
+    return true;
+}
+
 bool video_initialize(void)
 {
     qword_t *q;
@@ -74,6 +191,21 @@ bool video_initialize(void)
             return false;
         }
     }
+
+    test_texture.width = TEST_TEXTURE_WIDTH;
+    test_texture.psm = GS_PSM_32;
+    test_texture.address =
+        graph_vram_allocate(TEST_TEXTURE_WIDTH, TEST_TEXTURE_HEIGHT, GS_PSM_32,
+                            GRAPH_ALIGN_BLOCK);
+    if ((int)test_texture.address < 0 || !test_texture_layout_is_valid()) {
+        graph_vram_clear();
+        dma_channel_shutdown(DMA_CHANNEL_GIF, 0);
+        return false;
+    }
+    test_texture.info.width = draw_log2(TEST_TEXTURE_WIDTH);
+    test_texture.info.height = draw_log2(TEST_TEXTURE_HEIGHT);
+    test_texture.info.components = TEXTURE_COMPONENTS_RGBA;
+    test_texture.info.function = TEXTURE_FUNCTION_DECAL;
 
     display_buffer_index = 1;
     draw_buffer_index = 0;
@@ -104,6 +236,15 @@ bool video_initialize(void)
     clear_draw_buffer();
     select_draw_buffer(draw_buffer_index);
 
+    if (!upload_test_texture()) {
+        packet_free(draw_packet);
+        draw_packet = NULL;
+        graph_shutdown();
+        graph_vram_clear();
+        dma_channel_shutdown(DMA_CHANNEL_GIF, 0);
+        return false;
+    }
+
     return true;
 }
 
@@ -132,6 +273,57 @@ void video_draw_filled_rect(float x, float y, float width, float height,
     rectangle.color.q = 1.0f;
 
     q = draw_rect_filled(q, 0, &rectangle);
+    q = draw_finish(q);
+    submit_packet(q);
+}
+
+void video_draw_test_sprite(float x, float y, float width, float height)
+{
+    clutbuffer_t clut = {0};
+    lod_t lod = {0};
+    texrect_t rectangle;
+    texwrap_t wrap;
+    qword_t *q = draw_packet->data;
+
+    lod.calculation = LOD_USE_K;
+    lod.max_level = 0;
+    lod.mag_filter = LOD_MAG_NEAREST;
+    lod.min_filter = LOD_MIN_NEAREST;
+    lod.mipmap_select = LOD_MIPMAP_REGISTER;
+    lod.l = 0;
+    lod.k = 0.0f;
+
+    clut.storage_mode = CLUT_STORAGE_MODE1;
+    clut.load_method = CLUT_NO_LOAD;
+
+    wrap.horizontal = WRAP_CLAMP;
+    wrap.vertical = WRAP_CLAMP;
+    wrap.minu = 0;
+    wrap.maxu = TEST_TEXTURE_WIDTH - 1;
+    wrap.minv = 0;
+    wrap.maxv = TEST_TEXTURE_HEIGHT - 1;
+
+    rectangle.v0.x = x;
+    rectangle.v0.y = y;
+    rectangle.v0.z = 0;
+    rectangle.t0.u = 0.0f;
+    rectangle.t0.v = 0.0f;
+    rectangle.v1.x = x + width;
+    rectangle.v1.y = y + height;
+    rectangle.v1.z = 0;
+    rectangle.t1.u = (float)TEST_TEXTURE_WIDTH;
+    rectangle.t1.v = (float)TEST_TEXTURE_HEIGHT;
+    rectangle.color.r = 0x80;
+    rectangle.color.g = 0x80;
+    rectangle.color.b = 0x80;
+    rectangle.color.a = 0x80;
+    rectangle.color.q = 1.0f;
+
+    /* Debug-font drawing changes texture state, so bind immediately before use. */
+    q = draw_texture_sampling(q, 0, &lod);
+    q = draw_texture_wrapping(q, 0, &wrap);
+    q = draw_texturebuffer(q, 0, &test_texture, &clut);
+    q = draw_rect_textured(q, 0, &rectangle);
     q = draw_finish(q);
     submit_packet(q);
 }
@@ -174,6 +366,21 @@ int video_get_draw_buffer_index(void)
     return draw_buffer_index;
 }
 
+int video_get_test_texture_width(void)
+{
+    return TEST_TEXTURE_WIDTH;
+}
+
+int video_get_test_texture_height(void)
+{
+    return TEST_TEXTURE_HEIGHT;
+}
+
+const char *video_get_test_texture_format(void)
+{
+    return "GS_PSM_32 RGBA";
+}
+
 void video_shutdown(void)
 {
     if (draw_packet != NULL) {
@@ -184,5 +391,6 @@ void video_shutdown(void)
     graph_shutdown();
     graph_vram_free(framebuffers[0].address);
     graph_vram_free(framebuffers[1].address);
+    graph_vram_free(test_texture.address);
     dma_channel_shutdown(DMA_CHANNEL_GIF, 0);
 }

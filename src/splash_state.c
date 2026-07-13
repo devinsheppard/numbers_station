@@ -27,7 +27,7 @@ void splash_state_update(void)
 void splash_state_render(void)
 {
     video_begin_frame();
-    video_draw_text(10, 10, "Numbers Station\n\nMilestone 008");
+    video_draw_text(10, 10, "Numbers Station\n\nMilestone 009");
     video_present_frame();
 }
 

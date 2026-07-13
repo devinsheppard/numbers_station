@@ -68,6 +68,5 @@ void player_update(Player *player, float delta_seconds)
 
 void player_render(const Player *player)
 {
-    video_draw_filled_rect(player->x, player->y, player->width, player->height,
-                           0x30, 0xb0, 0xd0);
+    video_draw_test_sprite(player->x, player->y, player->width, player->height);
 }

@@ -5,15 +5,26 @@
 Numbers Station targets original PlayStation 2 hardware and PCSX2. Development
 uses a native AArch64 PS2 toolchain on Raspberry Pi 4 with Ubuntu 26.04.
 
-## Framebuffer layout
+## GS VRAM layout
 
-Milestone 008 retains the 640×448, 32-bit PS2SDK display mode and immediate-mode
-`libdraw` primitives. The video module resets PS2SDK's VRAM allocator and
-allocates two `GS_PSM_32` framebuffers with `GRAPH_ALIGN_PAGE` alignment.
+Milestone 009 retains the 640×448, 32-bit PS2SDK display mode, immediate-mode
+`libdraw` path, and two `GS_PSM_32` framebuffers. It adds one 32×32
+`GS_PSM_32` RGBA texture allocated with `GRAPH_ALIGN_BLOCK` after both
+page-aligned framebuffers.
 
-Each framebuffer contains 286,720 pixels and consumes 1,146,880 bytes. Together
-they consume 2,293,760 bytes of the GS's 4 MiB VRAM. There is no z-buffer,
-texture storage, or other video allocation.
+PS2SDK's allocator reports addresses and sizes in 32-bit GS words. The current
+deterministic allocation is:
+
+| Allocation | Word range | Byte range | Size |
+| --- | --- | --- | --- |
+| Framebuffer 0 | `0x00000–0x45fff` | `0x000000–0x117fff` | 1,146,880 bytes |
+| Framebuffer 1 | `0x46000–0x8bfff` | `0x118000–0x22ffff` | 1,146,880 bytes |
+| Test texture | `0x8c000–0x8c3ff` | `0x230000–0x230fff` | 4,096 bytes |
+
+The allocations consume 2,297,856 bytes of the GS's 4 MiB VRAM and leave
+1,896,448 bytes. There is no z-buffer or other video allocation. Initialization
+fails before the application loop if allocation fails, a range exceeds GS VRAM,
+or the test texture overlaps either framebuffer.
 
 At initialization:
 
@@ -23,6 +34,41 @@ At initialization:
 
 The indices describe roles, not fixed ownership. They alternate after every
 presented frame.
+
+## Test texture source and upload
+
+The video module procedurally generates 1,024 aligned 32-bit pixels during
+initialization. Bytes are ordered red, green, blue, alpha for `GS_PSM_32`; alpha
+uses the GS opaque value `0x80`. A 4×4 blue checkerboard, pale border and
+N-shaped emblem make the image recognizable. Four uniquely colored corners
+make its orientation testable. Generation is deterministic and requires no
+runtime files, disc access, build generator, heap allocation, or asset manager.
+
+Upload occurs once:
+
+1. Generate the CPU-side pixels and write back their data-cache range.
+2. Build a `draw_texture_transfer` GIF DMA chain targeting the allocated
+   texture buffer.
+3. Append `draw_texture_flush`, submit the chain, and wait for GIF DMA.
+4. Submit a texture flush plus GS finish fence and wait before reusing packet
+   storage or beginning normal rendering.
+
+The source pixel array remains statically owned by the video module. Texture
+VRAM is owned from video initialization through shutdown.
+
+## Textured-quad submission
+
+`video_draw_test_sprite` is deliberately specific to the single milestone
+texture. Immediately before each quad it selects nearest-neighbor sampling,
+clamps U and V to the 32×32 texture, binds the RGBA texture with decal mode, and
+submits a `draw_rect_textured` primitive in pixel coordinates. Rebinding at the
+point of use is required because PS2SDK debug-font drawing also changes GS
+texture state. A finish fence completes the immediate-mode packet before reuse.
+
+The quad maps `(0,0)–(32,32)` texels onto the player's existing 24×24 pixel
+rectangle without changing its aspect ratio. The player retains 180
+pixels/second delta-time movement and normalized diagonals. Its full-sprite
+clamps remain X `[0,616]` and Y `[0,424]`.
 
 ## Frame lifecycle
 
@@ -72,14 +118,15 @@ zero and one and remain opposite. The diagnostic text itself becomes visible
 as part of the completed draw buffer on that presentation.
 
 Existing delta-time movement, 100 ms stall clamp, diagonal normalization,
-24×24 player rectangle, and `[0,616] × [0,424]` boundary clamping are unchanged.
+controller input, application states, and presentation diagnostics remain in
+place. Gameplay additionally reports texture dimensions and format.
 
 ## Scope
 
-The video module exposes only frame begin, filled rectangle, diagnostic text,
-frame present, buffer-index queries, and shutdown. It has no render queue,
-materials, assets, textures, sprites, cameras, scene graph, or generalized
-graphics engine.
+The video module exposes only frame begin, filled rectangle, the single test
+sprite, diagnostic text, frame present, small diagnostic queries, and shutdown.
+It has no texture handles, runtime asset loading, registry, cache, sprite batch,
+render queue, materials, animation, cameras, scene graph, or generalized engine.
 
 ## Dependencies
 

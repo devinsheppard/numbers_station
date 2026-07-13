@@ -59,11 +59,11 @@ Generated files stay below `out/` and are never used as source inputs.
 
 ## Runtime verification
 
-The Milestone 008 ELF should initially display:
+The Milestone 009 ELF should initially display:
 
 ```text
 Numbers Station
-Milestone 008
+Milestone 009
 ```
 
 After approximately three seconds it should display:
@@ -76,29 +76,33 @@ Main Menu
 Press START
 ```
 
-## PCSX2 double-buffer verification
+## PCSX2 texture and sprite verification
 
 1. Configure a controller or keyboard mapping for PCSX2 controller port 1.
 2. Launch `out/bin/numbers_station.elf` through PCSX2's ELF loader.
 3. Confirm Splash appears immediately and Main Menu replaces it after about
    three seconds without input.
-4. Press START once and confirm Gameplay displays `Double Buffering Active`,
-   player X/Y pixel coordinates, bounded delta time, buffer indices, D-pad
-   instructions, and a filled colored rectangle.
-5. Hold each D-pad direction separately. Confirm the rectangle and matching
+4. Press START once and confirm Gameplay displays `Texture Rendering Active`,
+   player X/Y pixel coordinates, buffer indices, `32x32`, `GS_PSM_32 RGBA`,
+   D-pad instructions, and a textured square sprite.
+5. Confirm the sprite contains a blue checkerboard, pale border and N-shaped
+   emblem. Its corner markers must be red at top-left, green at top-right, blue
+   at bottom-left, and yellow at bottom-right.
+6. Hold each D-pad direction separately. Confirm the sprite and matching
    coordinate move smoothly in all four directions.
-6. Test diagonal and opposing directions. Confirm diagonal movement changes
+7. Test diagonal and opposing directions. Confirm diagonal movement changes
    both axes and opposing inputs cancel on their axis.
-7. Hold each direction against its boundary. Confirm X remains within `0–616`,
-   Y remains within `0–424`, and the entire 24×24 rectangle remains visible.
-8. Confirm display/draw indices are always opposite and alternate `0/1` then
+8. Hold each direction against its boundary. Confirm X remains within `0–616`,
+   Y remains within `0–424`, and the entire 24×24 sprite remains visible.
+9. Confirm display/draw indices are always opposite and alternate `0/1` then
    `1/0` as frames are presented.
-9. Watch Splash, Main Menu, diagnostics, and the moving rectangle for tearing,
-   partial clears, flicker, or alternating missing elements.
-10. Pause or stall emulation temporarily, then resume. Confirm displayed delta
-   does not exceed 100 ms and the player advances no more than 18 pixels from
-   that update, buffer alternation resumes, and the frame remains complete.
-11. Confirm Gameplay remains active after movement and START does not exit it.
+10. Watch Splash, Main Menu, diagnostics, and the moving sprite for corruption,
+   incorrect orientation, tearing, partial clears, flicker, or alternating
+   missing elements.
+11. Pause or stall emulation temporarily, then resume. Confirm the player
+   advances no more than 18 pixels from one update, buffer alternation resumes,
+   and the sprite and frame remain complete.
+12. Confirm Gameplay remains active after movement and START does not exit it.
 
 Static ELF inspection confirms the PS2 MIPS executable format. Runtime claims
 must be recorded separately for PCSX2 and real hardware; a successful build is
