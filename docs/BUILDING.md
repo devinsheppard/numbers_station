@@ -59,11 +59,11 @@ Generated files stay below `out/` and are never used as source inputs.
 
 ## Runtime verification
 
-The Milestone 005 ELF should initially display:
+The Milestone 006 ELF should initially display:
 
 ```text
 Numbers Station
-Milestone 005
+Milestone 006
 ```
 
 After approximately three seconds it should display:
@@ -76,16 +76,21 @@ Main Menu
 Press START
 ```
 
-## PCSX2 state verification
+## PCSX2 Gameplay verification
 
 1. Configure a controller or keyboard mapping for PCSX2 controller port 1.
 2. Launch `out/bin/numbers_station.elf` through PCSX2's ELF loader.
 3. Confirm Splash appears immediately and Main Menu replaces it after about
    three seconds without input.
-4. Press START once and confirm `Gameplay not yet implemented.` appears.
-5. Hold and release START. Confirm no new state begins and Main Menu remains
-   active.
-6. Leave the application running and confirm it remains stable.
+4. Press START once and confirm Gameplay immediately displays `Gameplay State
+   Active`, player X/Y coordinates, D-pad instructions, and an `@` marker.
+5. Hold each D-pad direction separately. Confirm the marker and matching
+   coordinate move in all four directions.
+6. Test diagonal and opposing directions. Confirm diagonal movement changes
+   both axes and opposing inputs cancel on their axis.
+7. Hold each direction against its boundary. Confirm X remains within `1–78`,
+   Y remains within `10–27`, and the marker remains visible.
+8. Confirm Gameplay remains active after movement and START does not exit it.
 
 Static ELF inspection confirms the PS2 MIPS executable format. Runtime claims
 must be recorded separately for PCSX2 and real hardware; a successful build is

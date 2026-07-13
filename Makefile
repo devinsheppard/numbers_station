@@ -15,7 +15,8 @@ CC := $(EE_PREFIX)gcc
 READELF := $(EE_PREFIX)readelf
 
 SOURCES := src/main.c src/application.c src/input.c src/video.c \
-	src/state_manager.c src/splash_state.c src/main_menu_state.c
+	src/state_manager.c src/splash_state.c src/main_menu_state.c \
+	src/gameplay_state.c src/player.c
 OBJECTS := $(patsubst src/%.c,$(OBJ_DIR)/%.o,$(SOURCES))
 DEPENDS := $(OBJECTS:.o=.d)
 

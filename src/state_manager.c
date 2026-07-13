@@ -1,12 +1,14 @@
 #include "state_manager.h"
 
+#include "gameplay_state.h"
 #include "main_menu_state.h"
 #include "splash_state.h"
 
 typedef enum ApplicationState {
     APPLICATION_STATE_NONE,
     APPLICATION_STATE_SPLASH,
-    APPLICATION_STATE_MAIN_MENU
+    APPLICATION_STATE_MAIN_MENU,
+    APPLICATION_STATE_GAMEPLAY
 } ApplicationState;
 
 static ApplicationState active_state;
@@ -19,6 +21,9 @@ static void state_shutdown(ApplicationState state)
             break;
         case APPLICATION_STATE_MAIN_MENU:
             main_menu_state_shutdown();
+            break;
+        case APPLICATION_STATE_GAMEPLAY:
+            gameplay_state_shutdown();
             break;
         case APPLICATION_STATE_NONE:
             break;
@@ -33,6 +38,9 @@ static void state_initialize(ApplicationState state)
             break;
         case APPLICATION_STATE_MAIN_MENU:
             main_menu_state_initialize();
+            break;
+        case APPLICATION_STATE_GAMEPLAY:
+            gameplay_state_initialize();
             break;
         case APPLICATION_STATE_NONE:
             break;
@@ -63,6 +71,12 @@ void state_manager_update(void)
             break;
         case APPLICATION_STATE_MAIN_MENU:
             main_menu_state_update();
+            if (main_menu_state_is_gameplay_requested()) {
+                state_change(APPLICATION_STATE_GAMEPLAY);
+            }
+            break;
+        case APPLICATION_STATE_GAMEPLAY:
+            gameplay_state_update();
             break;
         case APPLICATION_STATE_NONE:
             break;
@@ -77,6 +91,9 @@ void state_manager_render(void)
             break;
         case APPLICATION_STATE_MAIN_MENU:
             main_menu_state_render();
+            break;
+        case APPLICATION_STATE_GAMEPLAY:
+            gameplay_state_render();
             break;
         case APPLICATION_STATE_NONE:
             break;

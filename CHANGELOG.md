@@ -2,6 +2,14 @@
 
 All notable project changes will be appended here. Do not delete previous entries.
 
+## 2026-07-12 - Milestone 006 Gameplay State and Player Movement
+
+- Added Main Menu to Gameplay transition on newly pressed START.
+- Added a Gameplay state that owns and updates one player.
+- Added held-D-pad movement, screen-cell position diagnostics, and clamping.
+- Added a visible `@` player marker without sprites or world systems.
+- Documented movement flow, bounds, architecture, and PCSX2 verification.
+
 ## 2026-07-12 - Milestone 005 Application State Manager
 
 - Added a minimal single-active-state manager.

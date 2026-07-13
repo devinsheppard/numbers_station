@@ -4,9 +4,9 @@ Numbers Station is a PlayStation 2 homebrew project targeting original PS2
 hardware and PCSX2. Development is native on a Raspberry Pi 4 running Ubuntu
 26.04 ARM64. Docker, Windows, WSL, and Tyra are not part of the build workflow.
 
-Milestone 005 adds two concrete application states. The program displays a
-three-second Splash, transitions automatically to the Main Menu, and uses the
-controller's newly pressed START transition to show a placeholder message.
+Milestone 006 adds a concrete Gameplay state and a state-owned player prototype.
+START transitions from Main Menu to Gameplay, where the D-pad moves a visible
+text marker within conservative screen bounds.
 
 ## Requirements
 
@@ -70,6 +70,8 @@ See `docs/BUILDING.md` for verification and reproducibility details.
 - `src/state_manager.*` — active-state ownership and transitions
 - `src/splash_state.*` — timed launch screen
 - `src/main_menu_state.*` — menu display and START response
+- `src/gameplay_state.*` — Gameplay lifecycle and player ownership
+- `src/player.*` — two-dimensional position, movement, clamping, and marker
 - `docs/` — current engineering documentation and archived milestone evidence
 - `out/` — generated objects and ELF files; ignored by Git
 

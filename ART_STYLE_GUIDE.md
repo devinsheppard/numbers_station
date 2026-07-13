@@ -2,7 +2,7 @@
 
 ## Project Boundary
 
-Art production is not part of Milestone 005.
+Art production is not part of Milestone 006.
 
 This document is reserved for visual targets, model budgets, texture budgets, lighting rules, camera presentation, UI treatment, and PS2-specific art constraints.
 

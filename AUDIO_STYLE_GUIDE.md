@@ -2,7 +2,7 @@
 
 ## Project Boundary
 
-Audio production is not part of Milestone 005.
+Audio production is not part of Milestone 006.
 
 This document is reserved for music direction, sound design rules, voice treatment, memory budgets, streaming constraints, and PS2-specific audio limitations.
 

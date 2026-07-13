@@ -5,65 +5,71 @@
 Numbers Station targets original PlayStation 2 hardware and PCSX2. Development
 uses a native AArch64 PS2 toolchain on Raspberry Pi 4 with Ubuntu 26.04.
 
-## Application architecture
+## State architecture
 
-Milestone 005 retains the existing application, input, and video modules and
-adds only the state responsibilities currently required:
+Milestone 006 extends the explicit state manager with Gameplay. The manager
+knows exactly three states:
 
-- `state_manager` owns the identity and lifecycle of the single active state.
-- `splash_state` owns its timer and launch-screen rendering.
-- `main_menu_state` owns START handling, menu rendering, and the placeholder
-  message flag.
+- Splash
+- Main Menu
+- Gameplay
 
-The manager uses an explicit two-value state enum and switch dispatch. It does
-not implement a stack, registry, event bus, dynamic allocation, factories, or
-support for hypothetical states.
+Each owns initialization, update, rendering, and shutdown. The manager still
+uses one enum and switch dispatch; there is no stack, registry, factory, scene
+graph, entity system, or support for unspecified future states.
 
-## Startup sequence
+## Main Menu to Gameplay transition
 
-1. `main` enters the application.
-2. The application initializes SIF RPC, video, and controller input.
-3. The state manager selects and initializes Splash.
-4. The application enters its continuous update/render loop.
-
-## State lifecycle
-
-Each concrete state owns four operations:
+Main Menu checks the controller's newly pressed mask for `PAD_START`. It raises
+a transition request rather than changing state directly. After updating Main
+Menu, the manager observes the request and performs its normal sequence:
 
 ```text
-initialize
-update
-render
-shutdown
+shut down Main Menu
+select Gameplay
+initialize Gameplay
 ```
 
-For a transition, the manager calls the active state's shutdown operation,
-changes the active enum, and initializes the new state. Update and render are
-then dispatched only to that state. Shutdown dispatches once to the current
-state before application subsystems are stopped.
+Gameplay is rendered immediately after that update. Holding START does not
+retrigger the transition because Main Menu uses the pressed edge, not the held
+button mask.
 
-## Splash state
+## Gameplay lifecycle
 
-Splash initialization records `GetTimerSystemTime`. Update compares elapsed
-PS2 bus-clock time against three seconds, avoiding PAL/NTSC frame-rate
-assumptions. Render displays the project title and milestone identifier. Once
-the duration expires, the manager transitions automatically to Main Menu.
+Gameplay owns one static `Player` value. Initialization initializes that value,
+update delegates to the player once, rendering draws diagnostics and the player
+once, and shutdown clears the player fields. Gameplay requests no further
+transition and remains active until reset or power-off.
 
-## Main Menu state
+## Player module
 
-Main Menu initialization clears its placeholder flag. Update checks the input
-module's newly pressed mask for `PAD_START`; current/held input is intentionally
-not used. Pressing START sets the flag, and render adds:
+The player contains only:
 
 ```text
-Gameplay not yet implemented.
+x character-cell position
+y character-cell position
+movement speed in cells per frame
 ```
 
-No state transition or gameplay startup occurs. Main Menu remains active.
+It starts at `(40, 18)` with speed `1`. Update reads the input module's current
+button mask so movement continues while a D-pad direction is held:
 
-## Application loop integration
+- Up decreases Y.
+- Down increases Y.
+- Left decreases X.
+- Right increases X.
 
-Each frame performs:
+Diagonal movement is allowed. Opposing directions cancel on their axis. After
+movement, X is clamped to `1–78` and Y to `10–27`. These conservative text-grid
+bounds keep the `@` marker visible and reserve the upper rows for diagnostics.
+
+The positions are diagnostic screen cells, not world coordinates or pixels.
+There are no sprites, textures, animation, physics, collision, camera, or 3D
+rendering.
+
+## Frame flow
+
+Each application frame performs:
 
 ```text
 poll controller
@@ -71,8 +77,15 @@ update active state
 render active state
 ```
 
-Each state begins its frame through the video module, which waits for vertical
-blank and clears the display before state-owned text is drawn.
+Gameplay rendering begins a vertical-blank-synchronized frame, writes the
+milestone header, player coordinates, and controls, then asks the player to draw
+its `@` marker.
+
+## Video responsibility
+
+The video module remains a thin PS2SDK debug-display wrapper. Its text function
+now accepts formatted text because Gameplay must display changing coordinates.
+It is not a general renderer.
 
 ## Dependencies
 

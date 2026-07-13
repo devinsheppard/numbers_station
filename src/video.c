@@ -2,6 +2,7 @@
 
 #include <debug.h>
 #include <graph.h>
+#include <stdarg.h>
 
 bool video_initialize(void)
 {
@@ -16,10 +17,14 @@ void video_begin_frame(void)
     scr_clear();
 }
 
-void video_draw_text(int x, int y, const char *text)
+void video_draw_text(int x, int y, const char *format, ...)
 {
+    va_list arguments;
+
     scr_setXY(x, y);
-    scr_printf("%s", text);
+    va_start(arguments, format);
+    scr_vprintf(format, arguments);
+    va_end(arguments);
 }
 
 void video_shutdown(void)
