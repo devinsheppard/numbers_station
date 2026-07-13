@@ -1,12 +1,10 @@
 # Build outputs
-/build/*
-!/build/.gitkeep
-/iso/*
-!/iso/.gitkeep
+/out/
 /*.elf
 /*.irx
 /*.iso
 /*.map
+*.d
 
 # Editor and OS files
 .DS_Store

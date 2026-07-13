@@ -1,32 +1,76 @@
 PROJECT := numbers_station
-ELF := $(PROJECT).elf
+OUT_DIR := out
+OBJ_DIR := $(OUT_DIR)/obj
+BIN_DIR := $(OUT_DIR)/bin
+ELF := $(BIN_DIR)/$(PROJECT).elf
 
-.PHONY: all verify clean run iso
+# The compiler toolchain and PS2SDK are separate inputs. This prevents a stale
+# PS2DEV installation from silently selecting non-ARM64 host executables.
+NATIVE_PS2DEV ?= $(abspath ../ps2_arm64_toolchain/build/ps2dev)
+PS2SDK ?= /usr/local/ps2dev/ps2sdk
+PS2_CRT0 ?= $(abspath $(PS2SDK)/../ee/mips64r5900el-ps2-elf/lib/crt0.o)
 
-all: verify
-	@test -f src/main.cpp || (echo "ERROR: src/main.cpp is intentionally absent until PS2 toolchain verification succeeds."; exit 1)
-	@echo "ERROR: Runtime build rules are blocked until Project 001 toolchain verification passes."
-	@exit 1
+EE_PREFIX := $(NATIVE_PS2DEV)/ee/bin/mips64r5900el-ps2-elf-
+CC := $(EE_PREFIX)gcc
+READELF := $(EE_PREFIX)readelf
+
+SOURCES := src/main.c
+OBJECTS := $(patsubst src/%.c,$(OBJ_DIR)/%.o,$(SOURCES))
+DEPENDS := $(OBJECTS:.o=.d)
+
+CPPFLAGS := -D_EE -I$(PS2SDK)/ee/include -I$(PS2SDK)/common/include
+CFLAGS := -std=c11 -G0 -O2 -Wall -Wextra -Wpedantic -MMD -MP
+LDFLAGS := -T$(PS2SDK)/ee/startup/linkfile -L$(PS2SDK)/ee/lib \
+	-Wl,-zmax-page-size=128
+LDLIBS := -ldebug -lc
+
+.PHONY: all clean info verify run iso
+
+all: verify $(ELF)
 
 verify:
-	@test -n "$$PS2DEV" || (echo "ERROR: PS2DEV is not set."; exit 1)
-	@test -n "$$PS2SDK" || (echo "ERROR: PS2SDK is not set."; exit 1)
-	@command -v ee-g++ >/dev/null 2>&1 || (echo "ERROR: ee-g++ not found."; exit 1)
-	@command -v ee-gcc >/dev/null 2>&1 || (echo "ERROR: ee-gcc not found."; exit 1)
-	@command -v ee-ld >/dev/null 2>&1 || (echo "ERROR: ee-ld not found."; exit 1)
-	@test -d "$$PS2SDK" || (echo "ERROR: PS2SDK path does not exist: $$PS2SDK"; exit 1)
-	@test -d "$$GSKIT" || (echo "ERROR: GSKIT is not set or path does not exist."; exit 1)
-	@echo "Toolchain verification passed."
+	@test "$(shell uname -m)" = "aarch64" || \
+		(echo "ERROR: Native build host must be aarch64."; exit 1)
+	@test -x "$(CC)" || \
+		(echo "ERROR: Native EE compiler not found: $(CC)"; exit 1)
+	@"$(CC)" --version >/dev/null
+	@file "$(CC)" | grep -q 'ARM aarch64' || \
+		(echo "ERROR: EE compiler is not a native AArch64 executable: $(CC)"; exit 1)
+	@test -f "$(PS2SDK)/ee/startup/linkfile" || \
+		(echo "ERROR: PS2SDK startup linkfile not found under $(PS2SDK)."; exit 1)
+	@test -f "$(PS2SDK)/ee/include/debug.h" || \
+		(echo "ERROR: PS2SDK debug header not found under $(PS2SDK)."; exit 1)
+	@test -f "$(PS2SDK)/ee/lib/libdebug.a" || \
+		(echo "ERROR: PS2SDK debug library not found under $(PS2SDK)."; exit 1)
+	@test -f "$(PS2_CRT0)" || \
+		(echo "ERROR: PS2 startup object not found: $(PS2_CRT0)"; exit 1)
+	@echo "Native ARM64 PS2 build environment verified."
+
+$(ELF): $(OBJECTS)
+	@mkdir -p "$(@D)"
+	$(CC) -nostartfiles $(LDFLAGS) -o "$@" "$(PS2_CRT0)" $^ $(LDLIBS)
+
+$(OBJ_DIR)/%.o: src/%.c
+	@mkdir -p "$(@D)"
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c "$<" -o "$@"
+
+info:
+	@echo "Host:        $(shell uname -m)"
+	@echo "Toolchain:   $(NATIVE_PS2DEV)"
+	@echo "Compiler:    $(CC)"
+	@echo "PS2SDK:      $(PS2SDK)"
+	@echo "Startup:     $(PS2_CRT0)"
+	@echo "Output ELF:  $(ELF)"
 
 clean:
-	@echo "Cleaning local build outputs."
-	@rm -rf build/*
-	@rm -f $(ELF)
+	rm -rf "$(OUT_DIR)"
 
 run: all
-	@echo "Run support will be added after $(ELF) builds successfully."
+	@test -n "$(PCSX2)" || \
+		(echo "ERROR: Set PCSX2 to the emulator executable."; exit 1)
+	"$(PCSX2)" -elf "$(abspath $(ELF))"
 
 iso:
-	@echo "ISO creation is intentionally blocked for Project 001."
-	@exit 1
+	@echo "ISO packaging is not part of Milestone 002; use $(ELF) directly."
 
+-include $(DEPENDS)

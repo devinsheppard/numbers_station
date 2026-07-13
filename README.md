@@ -1,67 +1,70 @@
-# NUMBERS STATION
+# Numbers Station
 
-NUMBERS STATION is a long-term PlayStation 2 homebrew project targeting original PlayStation 2 hardware and current PCSX2.
+Numbers Station is a PlayStation 2 homebrew project targeting original PS2
+hardware and PCSX2. Development is native on a Raspberry Pi 4 running Ubuntu
+26.04 ARM64. Docker, Windows, WSL, and Tyra are not part of the build workflow.
 
-This repository is not disposable. Changes must preserve existing decisions and working behavior unless a future project prompt explicitly approves a breaking change.
+Milestone 002 provides a minimal PS2 executable that initializes the display,
+prints the native-build verification message, and remains running.
 
-## Project Scope
+## Requirements
 
-- Genre: psychological horror, survival horror, investigation, puzzle, exploration
-- Platform: Sony PlayStation 2
-- Tooling: legal open-source PS2 homebrew tools only
-- Target style: commercial-quality late 2003 / early 2004 PS2 title
+- AArch64 Ubuntu host
+- GNU Make and `file`
+- The verified native toolchain from `ps2_arm64_toolchain` Version 1.0
+- A compatible PS2SDK installation
 
-No non-PS2 platforms are in scope until the PS2 version is complete.
+By default, the Makefile expects the repositories to be siblings and resolves
+the native compiler from:
 
-## Required Toolchain
-
-The project assumes:
-
-- Windows 11
-- WSL2 Ubuntu
-- Git
-- GNU Make
-- PS2DEV
-- PS2SDK
-- gsKit
-- Open-source PS2 libraries
-
-## Current Status
-
-Project 001 foundation has been created, but PS2 toolchain verification failed on this machine:
-
-- WSL2 is available, but no Linux distributions are installed.
-- PS2DEV and PS2SDK environment variables are not available.
-- `ee-gcc`, `ee-g++`, `ee-ld`, and GNU Make for the PS2 build were not found.
-- gsKit and controller library availability could not be verified.
-
-Because required tools are missing, no PS2 application code has been written and no successful build is claimed.
-
-## Build Commands
-
-The build commands are reserved now so future sessions keep a stable interface:
-
-```sh
-make
-make clean
-make run
-make iso
+```text
+../ps2_arm64_toolchain/build/ps2dev
 ```
 
-At present, `make` stops during toolchain verification until PS2DEV, PS2SDK, gsKit, and the PS2 compiler tools are installed.
+It uses `PS2SDK` from the environment when set, otherwise:
 
-## Repository Layout
+```text
+/usr/local/ps2dev/ps2sdk
+```
 
-- `docs/` - supporting project documentation and verification notes
-- `src/` - application entry code after toolchain verification succeeds
-- `include/` - public project headers
-- `engine/` - project-specific engine code
-- `game/` - gameplay-specific code
-- `assets/` - source assets
-- `world/` - world design and structured world data
-- `tools/` - project support scripts
-- `build/` - local build output
-- `iso/` - ISO staging and output
-- `tests/` - verification tests and future host-side checks
-- `third_party/` - vendored open-source dependencies, if approved
+Override either location without editing the repository:
 
+```sh
+make NATIVE_PS2DEV=/path/to/native/ps2dev PS2SDK=/path/to/ps2sdk
+```
+
+## Build
+
+```sh
+make verify
+make
+```
+
+The ELF is written to:
+
+```text
+out/bin/numbers_station.elf
+```
+
+Additional commands:
+
+```sh
+make info
+make clean
+make run PCSX2=/path/to/pcsx2
+```
+
+`make run` is optional and requires a locally installed PCSX2 executable.
+Milestone 002 does not package an ISO; the ELF can be loaded directly by
+PCSX2 or suitable PS2 homebrew launch software.
+
+See `docs/BUILDING.md` for verification and reproducibility details.
+
+## Repository layout
+
+- `src/` — first-party PS2 program source
+- `docs/` — current engineering documentation and archived milestone evidence
+- `out/` — generated objects and ELF files; ignored by Git
+
+New architecture and content directories will be introduced only when a
+milestone requires them.

@@ -15,19 +15,21 @@
 
 ## Repository Rules
 
-- Preserve existing design decisions unless a future prompt explicitly changes them.
-- Prefer extension over replacement.
-- Document breaking changes before implementation.
+- Preserve validated behavior and intentional product constraints.
+- Replace obsolete foundations when evidence supports a simpler design.
+- Document dependency and interface changes.
 - Keep the repository buildable before stopping work.
 - Do not claim a successful build unless it actually compiled.
 
 ## C++ Direction
 
-Use modern C++ only where the PS2SDK toolchain supports it reliably. Avoid language or library features that increase risk on PS2 hardware.
+Use C or C++ deliberately and declare the language standard in the build.
+Avoid dynamic allocation in frame loops, make ownership explicit, and account
+for PS2 alignment and bounded-memory requirements when those systems are
+introduced.
 
 ## Revision Log
 
 ### 2026-07-11 - Project 001
 
 Created initial programming standards from the foundation prompt.
-

@@ -24,23 +24,21 @@ NUMBERS STATION will be developed as if it were a commercial PlayStation 2 title
 
 The game must respect PS2 hardware limitations and favor stable frame rate, predictable memory use, short loading times, and maintainable systems.
 
-## Project 001 Boundary
+## Milestone 002 Boundary
 
-No gameplay is implemented in Project 001.
+No gameplay is implemented in Milestone 002.
 
-The intended first runtime milestone is a minimal PS2 application that:
+The native build foundation is a minimal PS2 application that:
 
-- Initializes video
+- Initializes the display
 - Clears the screen
-- Displays `NUMBERS STATION` and `PROJECT INITIALIZED`
-- Initializes the controller
-- Exits cleanly when START is pressed
+- Displays `Numbers Station` and `Native ARM64 Build Verified`
+- Remains running until reset or power off
 
-This milestone is blocked until the PS2 homebrew toolchain is installed and verified.
+It deliberately contains no gameplay or engine systems.
 
 ## Revision Log
 
 ### 2026-07-11 - Project 001
 
 Initial design scope recorded from the project foundation prompt.
-

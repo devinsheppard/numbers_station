@@ -1,55 +1,29 @@
-# TECHNICAL DESIGN
+# Technical Design
 
 ## Platform
 
-NUMBERS STATION targets PlayStation 2 homebrew using legal open-source tools.
+Numbers Station targets original PlayStation 2 hardware and PCSX2. Development
+uses a native AArch64 PS2 toolchain on Raspberry Pi 4 with Ubuntu 26.04.
 
-Supported runtime targets:
+## Milestone 002 architecture
 
-- Original PlayStation 2 hardware
-- Current PCSX2
+The current program is intentionally one C entry point using PS2SDK directly.
+It initializes SIF RPC, initializes PS2SDK's debug display, prints two lines,
+and remains running.
 
-No other runtime targets are planned until the PS2 version is complete.
+There is no engine layer, rendering abstraction, asset system, game state,
+input layer, audio layer, or third-party game engine. Those boundaries will be
+introduced only in milestones that require them.
 
-## Language
+## Dependencies
 
-- Modern C++ where supported by PS2SDK
-- C only where required by PS2SDK libraries
+- Native EE cross-compiler from `ps2_arm64_toolchain` Version 1.0
+- PS2SDK target headers, startup linkfile, `libdebug`, and C library
 
-## Engine Direction
+The toolchain remains an external, read-only dependency. Tyra and gsKit are not
+dependencies of the Milestone 002 executable.
 
-The engine will be written specifically for this project. External engines such as Unity, Godot, Unreal, SDL game engines, Python game frameworks, DirectX, OpenGL, and Vulkan are not permitted.
+## Build interface
 
-Initial system boundaries:
-
-- Rendering
-- Input
-- Game state
-- World state
-- Asset loading
-- UI
-- Audio
-
-Project 001 does not implement these systems beyond reserving the structure.
-
-## Build System
-
-GNU Make is the project build interface. The stable command set is:
-
-- `make`
-- `make clean`
-- `make run`
-- `make iso`
-
-The current Makefile verifies required environment variables and tools before attempting compilation.
-
-## Toolchain Verification Status
-
-Verification failed on 2026-07-11. See `docs/TOOLCHAIN_VERIFICATION.md`.
-
-## Revision Log
-
-### 2026-07-11 - Project 001
-
-Created initial technical boundaries and blocked runtime implementation pending PS2 toolchain installation.
-
+GNU Make provides `make`, `make verify`, `make info`, `make clean`, and the
+optional `make run`. All generated output is isolated under `out/`.
