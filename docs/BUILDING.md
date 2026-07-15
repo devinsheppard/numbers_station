@@ -59,11 +59,11 @@ Generated files stay below `out/` and are never used as source inputs.
 
 ## Runtime verification
 
-The Milestone 010 ELF should initially display:
+The Milestone 011 ELF should initially display:
 
 ```text
 Numbers Station
-Milestone 010
+Milestone 011
 ```
 
 After approximately three seconds it should display:
@@ -76,33 +76,39 @@ Main Menu
 Press START
 ```
 
-## PCSX2 scrolling-world verification
+## PCSX2 analog-movement verification
 
 1. Configure a controller or keyboard mapping for PCSX2 controller port 1.
 2. Launch `out/bin/numbers_station.elf` through PCSX2's ELF loader.
 3. Confirm Splash appears immediately and Main Menu replaces it after about
    three seconds without input.
-4. Press START once and confirm Gameplay displays `Scrolling World`, player
-   world X/Y, viewport X/Y, D-pad instructions, and a textured square sprite.
+4. Press START once and confirm Gameplay displays `Analog Movement`, player
+   world X/Y, viewport X/Y, centered left-stick X/Y, movement instructions, and
+   a textured square sprite.
 5. Confirm the sprite contains a blue checkerboard, pale border and N-shaped
    emblem. Its corner markers must be red at top-left, green at top-right, blue
    at bottom-left, and yellow at bottom-right.
-6. Hold each D-pad direction separately. Confirm the world coordinate changes
-   smoothly, the viewport follows, and landmarks scroll relative to the player.
-7. Test diagonal and opposing directions. Confirm diagonal movement changes
-   both axes and opposing inputs cancel on their axis.
-8. Hold each direction against its world boundary. Confirm player X remains
+6. Confirm a centered stick and small motion inside the deadzone produce no
+   drift. Move just outside the deadzone and confirm slow movement begins.
+7. Increase stick deflection gradually and confirm speed rises proportionally;
+   full cardinal and diagonal deflection must not exceed 180 pixels per second.
+8. Confirm D-pad cardinal and diagonal movement remains normalized. Combine and
+   oppose D-pad and analog directions and confirm stable results without
+   exceeding maximum speed.
+9. Hold each direction against its world boundary. Confirm player X remains
    within `0–1576`, player Y remains within `0–1176`, viewport X remains within
    `0–960`, viewport Y remains within `0–752`, and no outside area is exposed.
-9. Confirm display/draw indices are always opposite and alternate `0/1` then
+10. Confirm display/draw indices are always opposite and alternate `0/1` then
    `1/0` as frames are presented.
-10. Visit all four edges and multiple corners. Confirm corner markers appear,
+11. Visit all four edges and multiple corners. Confirm corner markers appear,
     clipped landmarks remain inside the display, the environment fills every
     frame, and player placement remains correct when the viewport is clamped.
-11. Pause or stall emulation temporarily, then resume. Confirm the player
+12. Disconnect or disable the controller and confirm neutral axes, no drift,
+    crash, or hang. Reconnect it and confirm buttons and analog movement return.
+13. Pause or stall emulation temporarily, then resume. Confirm the player
    advances no more than 18 pixels from one update, buffer alternation resumes,
    and the sprite and frame remain complete.
-12. Confirm Gameplay remains active after movement, rendering continues after
+14. Confirm Gameplay remains active after movement, rendering continues after
     the textured player, and START does not exit it.
 
 Static ELF inspection confirms the PS2 MIPS executable format. Runtime claims

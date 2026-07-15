@@ -1,6 +1,7 @@
 #include "gameplay_state.h"
 
 #include "frame_timer.h"
+#include "input.h"
 #include "player.h"
 #include "video.h"
 
@@ -95,6 +96,7 @@ void gameplay_state_update(void)
 
 void gameplay_state_render(void)
 {
+    const InputState *input_state = input_get_state();
     unsigned int index;
 
     video_begin_frame();
@@ -105,12 +107,14 @@ void gameplay_state_render(void)
         draw_world_rectangle(&landmarks[index]);
     }
 
-    video_draw_text(2, 1, "Numbers Station\nMilestone 010\nScrolling World");
+    video_draw_text(2, 1, "Numbers Station\nMilestone 011\nAnalog Movement");
     video_draw_text(2, 5, "Player world: %d, %d", (int)player.x,
                     (int)player.y);
     video_draw_text(2, 6, "Viewport: %d, %d", (int)viewport_x,
                     (int)viewport_y);
-    video_draw_text(2, 8, "D-pad: Move through world");
+    video_draw_text(2, 7, "Left stick: %d, %d",
+                    input_state->left_stick_x, input_state->left_stick_y);
+    video_draw_text(2, 9, "D-pad / left stick: Move");
     player_render(&player, viewport_x, viewport_y);
     video_present_frame();
 }

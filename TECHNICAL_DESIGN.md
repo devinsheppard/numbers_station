@@ -162,6 +162,36 @@ collision, terrain, asset, scene, or generalized clipping system is present.
 Gameplay diagnostics report only player world X/Y and viewport X/Y. The known
 libdebug framebuffer-zero flicker remains outside this milestone.
 
+## Left analog-stick movement
+
+Milestone 011 extends the existing primary-controller input state with two
+signed left-stick values. PS2SDK supplies `ljoy_h` and `ljoy_v` as unsigned
+bytes with nominal center 128. Input polling subtracts 128, producing explicit
+horizontal and vertical values in the range `-128–127`. Unstable,
+disconnected, unreadable, or non-analog pads always publish zero for both axes.
+
+When the connected pad advertises `PAD_TYPE_DUALSHOCK`, input requests
+`PAD_MMODE_DUALSHOCK` with mode locking. The normal per-frame stable-state check
+absorbs the asynchronous mode transition. There is no rumble, pressure input,
+right-stick behavior, rebinding, or generalized mode manager.
+
+Player movement maps negative centered values through division by 128 and
+nonnegative values through division by 127, giving an approximate `-1–1`
+range. It then applies a radial deadzone of 0.25. For raw normalized magnitude
+`m`, the analog output magnitude is:
+
+```text
+0                              when m <= 0.25
+clamp((m - 0.25) / 0.75, 0, 1) when m > 0.25
+```
+
+The original analog direction is preserved. D-pad axes remain `-1`, `0`, or
+`1`; digital and processed analog vectors are added, then the combined vector
+is length-clamped to one. Multiplying that final intent by the unchanged
+180-pixel-per-second speed and frame delta guarantees that digital, analog,
+diagonal, and mixed input cannot exceed the existing maximum speed. World and
+viewport calculations are unchanged.
+
 ## Scope
 
 The video module exposes only frame begin, filled rectangle, the single test

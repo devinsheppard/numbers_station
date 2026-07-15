@@ -9,6 +9,8 @@ typedef struct InputState {
     uint16_t current_buttons;
     uint16_t pressed_buttons;
     uint16_t released_buttons;
+    int16_t left_stick_x;
+    int16_t left_stick_y;
     const char *last_pressed_button;
 } InputState;
 

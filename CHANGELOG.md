@@ -2,6 +2,15 @@
 
 All notable project changes will be appended here. Do not delete previous entries.
 
+## 2026-07-15 - Milestone 011 Left Analog Stick Movement
+
+- Added centered signed left-stick values to the existing primary input state.
+- Requested DualShock analog mode only when the connected pad supports it.
+- Added a fixed 25% radial deadzone with proportional magnitude rescaling.
+- Combined D-pad and analog intent with a final unit-length speed clamp.
+- Preserved world movement, viewport scrolling, textured rendering, and
+  disconnected-controller safety.
+
 ## 2026-07-15 - Milestone 010 Minimal Scrolling Gameplay World
 
 - Expanded Gameplay to a fixed 1600×1200 world with a clamped 640×448 viewport.

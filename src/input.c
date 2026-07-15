@@ -12,6 +12,8 @@ enum {
 
 static unsigned char pad_buffer[PAD_BUFFER_SIZE] __attribute__((aligned(64)));
 static bool port_open;
+static bool analog_mode_attempted;
+static bool analog_available;
 static InputState state;
 
 typedef struct ButtonName {
@@ -38,6 +40,35 @@ static const ButtonName button_names[] = {
     {PAD_R3, "R3"}
 };
 
+static void reset_analog_state(void)
+{
+    state.left_stick_x = 0;
+    state.left_stick_y = 0;
+    analog_available = false;
+}
+
+static void request_analog_mode(void)
+{
+    int index;
+    int mode_count =
+        padInfoMode(CONTROLLER_PORT, CONTROLLER_SLOT, PAD_MODETABLE, -1);
+
+    analog_mode_attempted = true;
+    for (index = 0; index < mode_count; ++index) {
+        if (padInfoMode(CONTROLLER_PORT, CONTROLLER_SLOT, PAD_MODETABLE,
+                        index) == PAD_TYPE_DUALSHOCK) {
+            if (padInfoMode(CONTROLLER_PORT, CONTROLLER_SLOT,
+                            PAD_MODECURID, 0) == PAD_TYPE_DUALSHOCK) {
+                analog_available = true;
+            } else {
+                padSetMainMode(CONTROLLER_PORT, CONTROLLER_SLOT,
+                               PAD_MMODE_DUALSHOCK, PAD_MMODE_LOCK);
+            }
+            return;
+        }
+    }
+}
+
 static const char *button_name(uint16_t pressed_buttons)
 {
     size_t index;
@@ -58,8 +89,12 @@ bool input_initialize(void)
     state.current_buttons = 0;
     state.pressed_buttons = 0;
     state.released_buttons = 0;
+    state.left_stick_x = 0;
+    state.left_stick_y = 0;
     state.last_pressed_button = "None";
     port_open = false;
+    analog_mode_attempted = false;
+    analog_available = false;
 
     if (SifLoadModule("rom0:SIO2MAN", 0, NULL) < 0) {
         return false;
@@ -96,10 +131,21 @@ void input_update(void)
         state.connected = false;
         state.current_buttons = 0;
         state.released_buttons = previous_buttons;
+        reset_analog_state();
+        if (pad_state == PAD_STATE_DISCONN) {
+            analog_mode_attempted = false;
+        }
         return;
     }
 
     state.connected = true;
+    if (!analog_mode_attempted) {
+        request_analog_mode();
+    }
+    analog_available =
+        padInfoMode(CONTROLLER_PORT, CONTROLLER_SLOT, PAD_MODECURID, 0) ==
+        PAD_TYPE_DUALSHOCK;
+
     state.current_buttons = (uint16_t)(0xffffU ^ buttons.btns);
     state.pressed_buttons =
         (uint16_t)(state.current_buttons & (uint16_t)~previous_buttons);
@@ -108,6 +154,14 @@ void input_update(void)
 
     if (state.pressed_buttons != 0) {
         state.last_pressed_button = button_name(state.pressed_buttons);
+    }
+
+    if (analog_available) {
+        state.left_stick_x = (int16_t)buttons.ljoy_h - 128;
+        state.left_stick_y = (int16_t)buttons.ljoy_v - 128;
+    } else {
+        state.left_stick_x = 0;
+        state.left_stick_y = 0;
     }
 }
 
@@ -123,5 +177,7 @@ void input_shutdown(void)
         port_open = false;
     }
 
+    analog_mode_attempted = false;
+    reset_analog_state();
     padEnd();
 }
