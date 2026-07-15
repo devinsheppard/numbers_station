@@ -11,6 +11,8 @@ All notable project changes will be appended here. Do not delete previous entrie
 - Allocated and validated texture VRAM after both page-aligned framebuffers.
 - Added cache writeback, GIF DMA-chain upload, texture flush, and GS completion.
 - Added nearest-filtered, clamped textured-quad drawing with explicit state.
+- Corrected the upload to use a padded 64×32 CPU surface and fixed UV endpoints
+  spanning the logical 32×32 image.
 - Replaced the player rectangle with the textured test sprite.
 - Added texture dimensions and pixel-format runtime diagnostics.
 - Documented texture generation, VRAM layout, rendering, and external checks.

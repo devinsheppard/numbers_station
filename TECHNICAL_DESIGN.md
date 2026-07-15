@@ -38,18 +38,20 @@ presented frame.
 
 ## Test texture source and upload
 
-The video module procedurally generates 1,024 aligned 32-bit pixels during
-initialization. Bytes are ordered red, green, blue, alpha for `GS_PSM_32`; alpha
-uses the GS opaque value `0x80`. A 4×4 blue checkerboard, pale border and
-N-shaped emblem make the image recognizable. Four uniquely colored corners
-make its orientation testable. Generation is deterministic and requires no
-runtime files, disc access, build generator, heap allocation, or asset manager.
+The video module procedurally generates an aligned 64×32 upload surface during
+initialization. Its left 32×32 pixels contain the logical image and its remaining
+columns are cleared padding. Bytes are ordered red, green, blue, alpha for
+`GS_PSM_32`; alpha uses the GS opaque value `0x80`. A 4×4 blue checkerboard,
+pale border and N-shaped emblem make the image recognizable. Four uniquely
+colored corners make its orientation testable. Generation is deterministic and
+requires no runtime files, disc access, build generator, heap allocation, or
+asset manager.
 
 The GS `BITBLTBUF.DBW` and `TEX0.TBW` fields express buffer width in 64-pixel
 units. The 32×32 logical image therefore uses a 64-pixel storage width. PS2SDK
-receives 32×32 as the transfer rectangle and 64 as both the destination stride
-and `texbuffer_t.width`. The reserved 64×32 VRAM region is 8,192 bytes; the
-source and transferred image data remain exactly 4,096 bytes.
+receives 64×32 as the transfer rectangle and 64 as both the destination stride
+and `texbuffer_t.width`. The source surface, cache-writeback range, transfer,
+and reserved VRAM region are each exactly 8,192 bytes.
 
 Upload occurs once:
 
@@ -57,8 +59,8 @@ Upload occurs once:
 2. Build a `draw_texture_transfer` GIF DMA chain targeting the allocated
    texture buffer.
 3. Append `draw_texture_flush`, submit the chain, and wait for GIF DMA.
-4. Submit a texture flush plus GS finish fence and wait before reusing packet
-   storage or beginning normal rendering.
+4. Wait for GIF DMA completion before freeing the upload packet or beginning
+   normal rendering.
 
 The source pixel array remains statically owned by the video module. Texture
 VRAM is owned from video initialization through shutdown.
@@ -70,10 +72,13 @@ texture. Immediately before each quad it selects nearest-neighbor sampling,
 clamps U and V to the 32×32 texture, binds the RGBA texture with decal mode, and
 submits a `draw_rect_textured` primitive in pixel coordinates. Rebinding at the
 point of use is required because PS2SDK debug-font drawing also changes GS
-texture state. A finish fence completes the immediate-mode packet before reuse.
+texture state. The binding and textured primitive use separate completed
+immediate-mode packets.
 
-The quad maps `(0,0)–(32,32)` texels onto the player's existing 24×24 pixel
-rectangle without changing its aspect ratio. The player retains 180
+`draw_rect_textured` sets `FST=1` and expects texel-space UV inputs; libdraw
+converts them to GS 12.4 fixed-point values. The quad therefore maps
+`(0,0)–(32,32)` texels onto the player's existing 24×24 pixel rectangle without
+changing its aspect ratio. The player retains 180
 pixels/second delta-time movement and normalized diagonals. Its full-sprite
 clamps remain X `[0,616]` and Y `[0,424]`.
 

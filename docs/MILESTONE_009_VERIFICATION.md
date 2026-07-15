@@ -1,6 +1,6 @@
 # Milestone 009 Verification
 
-Date: 2026-07-13
+Date: 2026-07-14
 
 ## Native build
 
@@ -11,13 +11,13 @@ compiler or linker warnings. Both produced:
 out/bin/numbers_station.elf
 ```
 
-Both clean builds had the same SHA-256 digest:
+Both final clean builds had the same SHA-256 digest:
 
 ```text
-ad7eceff24a01a468322eafddd58794990e37f9c15bd0063ce94eb0514485dc6
+c9a5501c26fe6fd3b20192d66052be03970cc39c1e98d547bdeeda03329e2dba
 ```
 
-The resulting ELF is 1,423,884 bytes.
+The resulting ELF is 1,423,756 bytes.
 
 ## Static inspection
 
@@ -28,17 +28,20 @@ diagnostic, and textured-sprite instructions.
 
 Code-path inspection confirms:
 
-- deterministic procedural generation of 1,024 aligned RGBA pixels;
-- a 32×32 `GS_PSM_32` source, 64-pixel GS storage stride, and 8,192-byte
-  texture allocation;
+- deterministic procedural generation in an aligned 64×32 RGBA upload surface,
+  with the logical 32×32 image in its left half and cleared padding;
+- a 64×32 `GS_PSM_32` transfer, 64-pixel GS storage stride, and 8,192-byte
+  texture allocation and source range;
 - data-cache writeback before GIF DMA reads the source pixels;
-- DMA-chain texture transfer, texture-cache flush, DMA completion, and a GS
-  finish fence before packet reuse;
+- DMA-chain texture transfer, texture-cache flush, and GIF DMA completion
+  before packet reuse;
 - texture allocation after both framebuffers;
 - explicit GS-range and framebuffer-overlap validation;
 - nearest-neighbor sampling, U/V clamping, RGBA decal mode, and an immediate
   textured rectangle;
 - texture-state binding after diagnostic text and immediately before the quad;
+- fixed texel-space UV endpoints `(0,0)–(32,32)` converted by libdraw to the
+  GS 12.4 UV format;
 - the existing begin, completion, vertical-blank, swap, and retarget sequence;
 - the existing 24×24 player bounds of X `0–616` and Y `0–424`, delta-time
   movement, and normalized diagonals.
@@ -55,45 +58,51 @@ The final allocation ends at byte offset `0x232000`, safely below the 4 MiB GS
 VRAM limit at `0x400000`. The texture begins exactly after framebuffer 1 and
 does not overlap either framebuffer.
 
-## Original PCSX2 failure and corrective fix
+## PCSX2 failures and corrective fixes
 
 The original Milestone 009 ELF was tested externally in PCSX2 and produced a
 completely black screen, including Splash and Main Menu. Milestones 007 and 008
 continued to work, isolating the failure to texture initialization.
 
-The root cause was the use of logical width 32 for `texbuffer_t.width` and for
-the texture transfer's destination width. PS2SDK converts both values to the GS
-`TBW` and `DBW` fields by dividing by 64. Passing 32 therefore encoded both
-fields as zero. The resulting invalid host-to-local transfer prevented normal
-GS completion; the initialization finish wait never completed, so application
-state rendering never began.
+The first fault was the use of logical width 32 for `texbuffer_t.width` and the
+transfer destination stride. PS2SDK converts both to GS `TBW` and `DBW` fields
+by dividing by 64, so 32 encoded an invalid zero width. Correcting those fields
+alone did not resolve runtime initialization. The completed fix uses a padded
+64×32 CPU surface and transfers the complete 64×32 storage region with TBW and
+DBW equal to one. Its aligned cache-writeback range is exactly 8,192 bytes.
+Official PS2SDK examples confirmed submission on `DMA_CHANNEL_GIF` followed by
+`dma_wait_fast()` is the correct synchronization sequence.
 
-The corrective change keeps the logical texture and transferred rectangle at
-32×32 but uses the GS minimum 64-pixel storage stride for allocation,
-`texbuffer_t.width`, and the transfer destination width. The DMA chain,
-termination, aligned source, exact 4,096-byte cache writeback range, texture
-flush, and completion fence remain unchanged because inspection found those
-parts correctly formed.
+Staged runtime isolation then verified allocation, generation, cache writeback,
+upload, synchronization, binding, textured drawing, and subsequent primitive
+rendering independently. A later solid-red sprite was traced to coordinates of
+`(0,0)–(1,1)`. Inspection of `draw_rect_textured()` confirmed it sets `FST=1`,
+emits fixed GS UV coordinates, and multiplies input coordinates by 16 for GS
+12.4 format. Restoring pixel-style endpoints `(0,0)–(32,32)` made the complete
+procedural texture visible.
 
 ## External PCSX2 verification
 
-PCSX2 is not installed on the ARM64 build host. The corrected ELF therefore
-requires another external runtime pass. Follow `docs/BUILDING.md` and confirm:
+PCSX2 is not installed on the ARM64 build host. External validation was
+completed through the Batocera EmulationStation/BUA launch route, which provides
+working controller mapping. The final runtime confirmed:
 
 1. Splash transitions to Main Menu and START enters Gameplay.
 2. The sprite shows the documented checkerboard, N emblem, and four correctly
    oriented corner colors without corruption.
 3. D-pad movement is smooth in all directions, diagonals are normalized, and
    the complete sprite remains inside the screen bounds.
-4. Display and draw indices remain opposite and alternate every frame.
-5. Splash, Main Menu, input, timing, state transitions, and double-buffered
-   presentation show no regressions.
-6. Pause and resume does not produce a movement jump, damaged texture, partial
-   frame, or stopped buffer alternation.
+4. Display and draw indices remained opposite and the established
+   double-buffered presentation continued without a persistent black screen.
+5. Splash, Main Menu, input, timing, state transitions, player movement, and
+   rendering after the textured draw showed no regressions.
 
-Until those checks are performed, the native build, deterministic ELF, texture
-generation and upload path, VRAM safety checks, GS state submission, and static
-PS2 suitability are verified; successful rendering is not claimed locally.
+The checkerboard, pale border, four orientation corners, and intentionally
+narrow centered N emblem all rendered correctly. There was no freeze or
+persistent black screen, and primitive rendering continued after the textured
+draw. The known libdebug text flicker is a pre-existing double-buffer artifact:
+libdebug targets framebuffer address zero rather than tracking the active draw
+buffer.
 
 ## Limitations
 
@@ -102,7 +111,8 @@ PS2 suitability are verified; successful rendering is not claimed locally.
 - The texture is uploaded only during video initialization and cannot be
   replaced at runtime.
 - Drawing remains conservative and synchronous rather than pipelined.
-- Runtime appearance and controller behavior require external PCSX2 or hardware
-  validation.
+- Pause/resume behavior was not repeated during the final corrective runtime
+  pass.
+- Real PlayStation 2 hardware remains untested.
 - There is no filesystem loading, disc loading, texture cache, sprite batching,
   animation, camera, map, collision, or 3D rendering.

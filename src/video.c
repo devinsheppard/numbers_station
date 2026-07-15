@@ -19,7 +19,8 @@ enum {
     TEST_TEXTURE_WIDTH = 32,
     TEST_TEXTURE_HEIGHT = 32,
     TEST_TEXTURE_STORAGE_WIDTH = 64,
-    TEST_TEXTURE_PIXEL_COUNT = TEST_TEXTURE_WIDTH * TEST_TEXTURE_HEIGHT
+    TEST_TEXTURE_PIXEL_COUNT =
+        TEST_TEXTURE_STORAGE_WIDTH * TEST_TEXTURE_HEIGHT
 };
 
 static framebuffer_t framebuffers[FRAMEBUFFER_COUNT];
@@ -44,8 +45,14 @@ static void generate_test_texture(void)
     int y;
 
     for (y = 0; y < TEST_TEXTURE_HEIGHT; ++y) {
-        for (x = 0; x < TEST_TEXTURE_WIDTH; ++x) {
+        for (x = 0; x < TEST_TEXTURE_STORAGE_WIDTH; ++x) {
             unsigned int pixel;
+
+            if (x >= TEST_TEXTURE_WIDTH) {
+                test_texture_pixels[y * TEST_TEXTURE_STORAGE_WIDTH + x] = 0;
+                continue;
+            }
+
             int checker = ((x / 4) + (y / 4)) & 1;
             bool border = x < 2 || x >= TEST_TEXTURE_WIDTH - 2 || y < 2 ||
                           y >= TEST_TEXTURE_HEIGHT - 2;
@@ -69,7 +76,7 @@ static void generate_test_texture(void)
                 pixel = rgba(0xe0, 0xc0, 0x30);
             }
 
-            test_texture_pixels[y * TEST_TEXTURE_WIDTH + x] = pixel;
+            test_texture_pixels[y * TEST_TEXTURE_STORAGE_WIDTH + x] = pixel;
         }
     }
 
@@ -146,23 +153,17 @@ static bool upload_test_texture(void)
         return false;
     }
 
-    generate_test_texture();
     q = upload_packet->data;
-    q = draw_texture_transfer(q, test_texture_pixels, TEST_TEXTURE_WIDTH,
+    q = draw_texture_transfer(q, test_texture_pixels,
+                              TEST_TEXTURE_STORAGE_WIDTH,
                               TEST_TEXTURE_HEIGHT, GS_PSM_32,
                               test_texture.address, test_texture.width);
     q = draw_texture_flush(q);
 
-    dma_wait_fast();
     dma_channel_send_chain(DMA_CHANNEL_GIF, upload_packet->data,
                            q - upload_packet->data, 0, 0);
     dma_wait_fast();
     packet_free(upload_packet);
-
-    q = draw_packet->data;
-    q = draw_texture_flush(q);
-    q = draw_finish(q);
-    submit_packet(q);
     return true;
 }
 
@@ -193,12 +194,12 @@ bool video_initialize(void)
         }
     }
 
-    /* GS texture-buffer width is encoded in 64-pixel units and cannot be 32. */
+    /* GS texture-buffer width is encoded in 64-pixel units. */
     test_texture.width = TEST_TEXTURE_STORAGE_WIDTH;
     test_texture.psm = GS_PSM_32;
-    test_texture.address =
-        graph_vram_allocate(TEST_TEXTURE_STORAGE_WIDTH, TEST_TEXTURE_HEIGHT,
-                            GS_PSM_32, GRAPH_ALIGN_BLOCK);
+    test_texture.address = graph_vram_allocate(
+        TEST_TEXTURE_STORAGE_WIDTH, TEST_TEXTURE_HEIGHT, GS_PSM_32,
+        GRAPH_ALIGN_BLOCK);
     if ((int)test_texture.address < 0 || !test_texture_layout_is_valid()) {
         graph_vram_clear();
         dma_channel_shutdown(DMA_CHANNEL_GIF, 0);
@@ -238,6 +239,7 @@ bool video_initialize(void)
     clear_draw_buffer();
     select_draw_buffer(draw_buffer_index);
 
+    generate_test_texture();
     if (!upload_test_texture()) {
         packet_free(draw_packet);
         draw_packet = NULL;
@@ -246,7 +248,6 @@ bool video_initialize(void)
         dma_channel_shutdown(DMA_CHANNEL_GIF, 0);
         return false;
     }
-
     return true;
 }
 
@@ -313,6 +314,7 @@ void video_draw_test_sprite(float x, float y, float width, float height)
     rectangle.v1.x = x + width;
     rectangle.v1.y = y + height;
     rectangle.v1.z = 0;
+    /* libdraw converts texel-space coordinates to GS 12.4 fixed-point UV. */
     rectangle.t1.u = (float)TEST_TEXTURE_WIDTH;
     rectangle.t1.v = (float)TEST_TEXTURE_HEIGHT;
     rectangle.color.r = 0x80;
@@ -325,6 +327,10 @@ void video_draw_test_sprite(float x, float y, float width, float height)
     q = draw_texture_sampling(q, 0, &lod);
     q = draw_texture_wrapping(q, 0, &wrap);
     q = draw_texturebuffer(q, 0, &test_texture, &clut);
+    q = draw_finish(q);
+    submit_packet(q);
+
+    q = draw_packet->data;
     q = draw_rect_textured(q, 0, &rectangle);
     q = draw_finish(q);
     submit_packet(q);
