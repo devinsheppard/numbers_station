@@ -131,7 +131,36 @@ as part of the completed draw buffer on that presentation.
 
 Existing delta-time movement, 100 ms stall clamp, diagonal normalization,
 controller input, application states, and presentation diagnostics remain in
-place. Gameplay additionally reports texture dimensions and format.
+place.
+
+## Minimal scrolling world
+
+Milestone 010 defines a fixed 1600×1200 pixel world and a fixed 640×448 pixel
+viewport. The player's existing floating-point position is now a world-space
+position, initialized at the world center and clamped so its complete 24×24
+sprite stays within X `[0,1576]` and Y `[0,1176]`.
+
+Gameplay owns two scalar viewport offsets. Each update attempts to center the
+viewport on the player's center:
+
+```text
+viewport_x = player_center_x - 320
+viewport_y = player_center_y - 224
+```
+
+The results clamp to X `[0,960]` and Y `[0,752]`. Player rendering subtracts
+those offsets from the world position before calling the verified textured-quad
+path. There is no camera type or spatial framework.
+
+The technical environment consists of a full-screen base color and nine fixed
+world-space rectangles: a large central region, one landmark in each cardinal
+direction, and four corner markers. Gameplay clips each rectangle against the
+current viewport with local min/max calculations, then submits only its visible
+screen-space portion through the existing filled-rectangle function. No map,
+collision, terrain, asset, scene, or generalized clipping system is present.
+
+Gameplay diagnostics report only player world X/Y and viewport X/Y. The known
+libdebug framebuffer-zero flicker remains outside this milestone.
 
 ## Scope
 

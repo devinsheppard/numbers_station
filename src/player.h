@@ -11,6 +11,6 @@ typedef struct Player {
 
 void player_initialize(Player *player);
 void player_update(Player *player, float delta_seconds);
-void player_render(const Player *player);
+void player_render(const Player *player, float viewport_x, float viewport_y);
 
 #endif

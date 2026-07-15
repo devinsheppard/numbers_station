@@ -59,11 +59,11 @@ Generated files stay below `out/` and are never used as source inputs.
 
 ## Runtime verification
 
-The Milestone 009 ELF should initially display:
+The Milestone 010 ELF should initially display:
 
 ```text
 Numbers Station
-Milestone 009
+Milestone 010
 ```
 
 After approximately three seconds it should display:
@@ -76,33 +76,34 @@ Main Menu
 Press START
 ```
 
-## PCSX2 texture and sprite verification
+## PCSX2 scrolling-world verification
 
 1. Configure a controller or keyboard mapping for PCSX2 controller port 1.
 2. Launch `out/bin/numbers_station.elf` through PCSX2's ELF loader.
 3. Confirm Splash appears immediately and Main Menu replaces it after about
    three seconds without input.
-4. Press START once and confirm Gameplay displays `Texture Rendering Active`,
-   player X/Y pixel coordinates, buffer indices, `32x32`, `GS_PSM_32 RGBA`,
-   D-pad instructions, and a textured square sprite.
+4. Press START once and confirm Gameplay displays `Scrolling World`, player
+   world X/Y, viewport X/Y, D-pad instructions, and a textured square sprite.
 5. Confirm the sprite contains a blue checkerboard, pale border and N-shaped
    emblem. Its corner markers must be red at top-left, green at top-right, blue
    at bottom-left, and yellow at bottom-right.
-6. Hold each D-pad direction separately. Confirm the sprite and matching
-   coordinate move smoothly in all four directions.
+6. Hold each D-pad direction separately. Confirm the world coordinate changes
+   smoothly, the viewport follows, and landmarks scroll relative to the player.
 7. Test diagonal and opposing directions. Confirm diagonal movement changes
    both axes and opposing inputs cancel on their axis.
-8. Hold each direction against its boundary. Confirm X remains within `0–616`,
-   Y remains within `0–424`, and the entire 24×24 sprite remains visible.
+8. Hold each direction against its world boundary. Confirm player X remains
+   within `0–1576`, player Y remains within `0–1176`, viewport X remains within
+   `0–960`, viewport Y remains within `0–752`, and no outside area is exposed.
 9. Confirm display/draw indices are always opposite and alternate `0/1` then
    `1/0` as frames are presented.
-10. Watch Splash, Main Menu, diagnostics, and the moving sprite for corruption,
-   incorrect orientation, tearing, partial clears, flicker, or alternating
-   missing elements.
+10. Visit all four edges and multiple corners. Confirm corner markers appear,
+    clipped landmarks remain inside the display, the environment fills every
+    frame, and player placement remains correct when the viewport is clamped.
 11. Pause or stall emulation temporarily, then resume. Confirm the player
    advances no more than 18 pixels from one update, buffer alternation resumes,
    and the sprite and frame remain complete.
-12. Confirm Gameplay remains active after movement and START does not exit it.
+12. Confirm Gameplay remains active after movement, rendering continues after
+    the textured player, and START does not exit it.
 
 Static ELF inspection confirms the PS2 MIPS executable format. Runtime claims
 must be recorded separately for PCSX2 and real hardware; a successful build is

@@ -5,8 +5,8 @@
 #include "input.h"
 #include "video.h"
 
-static const float SCREEN_WIDTH = 640.0f;
-static const float SCREEN_HEIGHT = 448.0f;
+static const float WORLD_WIDTH = 1600.0f;
+static const float WORLD_HEIGHT = 1200.0f;
 static const float PLAYER_SIZE = 24.0f;
 static const float PLAYER_SPEED = 180.0f;
 static const float DIAGONAL_NORMALIZATION = 0.70710678f;
@@ -28,8 +28,8 @@ void player_initialize(Player *player)
 {
     player->width = PLAYER_SIZE;
     player->height = PLAYER_SIZE;
-    player->x = (SCREEN_WIDTH - player->width) * 0.5f;
-    player->y = (SCREEN_HEIGHT - player->height) * 0.5f;
+    player->x = (WORLD_WIDTH - player->width) * 0.5f;
+    player->y = (WORLD_HEIGHT - player->height) * 0.5f;
     player->movement_speed = PLAYER_SPEED;
 }
 
@@ -62,11 +62,12 @@ void player_update(Player *player, float delta_seconds)
     player->y += direction_y * normalization * player->movement_speed *
                  delta_seconds;
 
-    player->x = clamp(player->x, 0.0f, SCREEN_WIDTH - player->width);
-    player->y = clamp(player->y, 0.0f, SCREEN_HEIGHT - player->height);
+    player->x = clamp(player->x, 0.0f, WORLD_WIDTH - player->width);
+    player->y = clamp(player->y, 0.0f, WORLD_HEIGHT - player->height);
 }
 
-void player_render(const Player *player)
+void player_render(const Player *player, float viewport_x, float viewport_y)
 {
-    video_draw_test_sprite(player->x, player->y, player->width, player->height);
+    video_draw_test_sprite(player->x - viewport_x, player->y - viewport_y,
+                           player->width, player->height);
 }

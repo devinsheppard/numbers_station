@@ -2,6 +2,15 @@
 
 All notable project changes will be appended here. Do not delete previous entries.
 
+## 2026-07-15 - Milestone 010 Minimal Scrolling Gameplay World
+
+- Expanded Gameplay to a fixed 1600×1200 world with a clamped 640×448 viewport.
+- Converted player position and full-sprite boundary checks to world space.
+- Added deterministic clipped colored regions and cardinal/corner landmarks.
+- Preserved delta-time movement, diagonal normalization, and the verified
+  Milestone 009 textured-player rendering path.
+- Added world-position and viewport diagnostics and runtime verification steps.
+
 ## 2026-07-13 - Milestone 009 Texture Upload and Sprite Rendering
 
 - Corrected the GS texture storage stride to the required 64-pixel minimum;
