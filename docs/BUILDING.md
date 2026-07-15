@@ -59,11 +59,11 @@ Generated files stay below `out/` and are never used as source inputs.
 
 ## Runtime verification
 
-The Milestone 012 ELF should initially display:
+The Milestone 013 ELF should initially display:
 
 ```text
 Numbers Station
-Milestone 012
+Milestone 013
 ```
 
 After approximately three seconds it should display:
@@ -76,42 +76,41 @@ Main Menu
 Press START
 ```
 
-## PCSX2 static-collision verification
+## PCSX2 fixed-interaction verification
 
 1. Configure a controller or keyboard mapping for PCSX2 controller port 1.
 2. Launch `out/bin/numbers_station.elf` through PCSX2's ELF loader.
 3. Confirm Splash appears immediately and Main Menu replaces it after about
    three seconds without input.
-4. Press START once and confirm Gameplay displays `Static Collision`, player
-   world X/Y, viewport X/Y, blocked-axis diagnostics, four bright solid
-   obstacles, and a textured square sprite.
+4. Press START once and confirm Gameplay displays `World Interaction`, player
+   world X/Y, viewport X/Y, blocked-axis diagnostics, four solid obstacles, a
+   green signal terminal, and a textured square sprite.
 5. Confirm the sprite contains a blue checkerboard, pale border and N-shaped
    emblem. Its corner markers must be red at top-left, green at top-right, blue
    at bottom-left, and yellow at bottom-right.
-6. Approach every solid rectangle from each reachable side with cardinal
-   D-pad and analog movement. Confirm the player stops flush without entering
-   the obstacle and can move away immediately.
-7. Apply diagonal D-pad and analog movement at horizontal and vertical walls.
-   Confirm the blocked axis stops while the unobstructed axis continues, with
-   no jitter.
-8. Test the L-shaped obstacle corner from multiple directions. Confirm the
-   fixed X-then-Y resolution is repeatable and does not embed or trap the player.
-9. Combine and oppose D-pad and analog input against obstacles. Confirm mixed
-   input cannot force penetration and maximum speed remains unchanged.
-10. Hold each direction against its world boundary. Confirm player X remains
+6. Press Cross while outside the terminal and confirm nothing changes. Hold
+   Cross, enter the terminal, and confirm it still does not activate.
+7. Release Cross while overlapping. Confirm `Press CROSS to activate.` appears,
+   then newly press Cross and confirm the terminal changes from green to yellow
+   and displays `Signal terminal activated.`
+8. Leave and revisit the terminal. Confirm activation remains latched and
+   additional Cross presses do not create another state change or message.
+9. Move through the terminal from every direction and confirm it never blocks
+   movement. Confirm its visible bounds exactly match the prompt boundary.
+10. Recheck obstacle stopping, wall sliding, and the L-shaped corner with D-pad
+    and analog movement. Confirm collision remains unchanged.
+11. Hold each direction against its world boundary. Confirm player X remains
    within `0–1576`, player Y remains within `0–1176`, viewport X remains within
    `0–960`, viewport Y remains within `0–752`, and no outside area is exposed.
-11. Confirm display/draw indices are always opposite and alternate `0/1` then
+12. Confirm display/draw indices are always opposite and alternate `0/1` then
    `1/0` as frames are presented.
-12. Visit all four edges and multiple corners. Confirm corner markers appear,
+13. Visit all four edges and multiple corners. Confirm corner markers appear,
     clipped landmarks remain inside the display, the environment fills every
     frame, and player placement remains correct when the viewport is clamped.
-13. Disconnect or disable the controller and confirm neutral axes, no drift,
-    crash, or hang. Reconnect it and confirm buttons and analog movement return.
-14. Pause or stall emulation temporarily, then move at full speed toward each
-    obstacle orientation. Confirm the 18-pixel capped displacement cannot cross
-    a 36-pixel-or-thicker obstacle.
-15. Confirm Gameplay remains active after movement, rendering continues after
+14. Disconnect or disable the controller near the terminal and confirm no
+    accidental activation, drift, crash, or hang. Reconnect and confirm input
+    returns safely.
+15. Confirm Gameplay remains active after interaction, rendering continues after
     the textured player, and START does not exit it.
 
 Static ELF inspection confirms the PS2 MIPS executable format. Runtime claims

@@ -1,6 +1,9 @@
 #include "gameplay_state.h"
 
+#include <libpad.h>
+
 #include "frame_timer.h"
+#include "input.h"
 #include "player.h"
 #include "video.h"
 
@@ -21,12 +24,20 @@ typedef struct WorldRectangle {
     unsigned char blue;
 } WorldRectangle;
 
+typedef struct SignalTerminal {
+    WorldRectangle rectangle;
+    unsigned char activated_red;
+    unsigned char activated_green;
+    unsigned char activated_blue;
+} SignalTerminal;
+
 static Player player;
 static FrameTimer frame_timer;
 static float viewport_x;
 static float viewport_y;
 static int player_blocked_x;
 static int player_blocked_y;
+static int signal_terminal_activated;
 
 static const WorldRectangle landmarks[] = {
     {520.0f, 380.0f, 560.0f, 440.0f, 0x18, 0x38, 0x28},
@@ -45,6 +56,11 @@ static const WorldRectangle solid_obstacles[] = {
     {900.0f, 520.0f, 300.0f, 36.0f, 0x30, 0xb8, 0xc8},
     {1040.0f, 760.0f, 36.0f, 180.0f, 0xd0, 0x38, 0x88},
     {1040.0f, 904.0f, 220.0f, 36.0f, 0xd0, 0x38, 0x88}
+};
+
+static const SignalTerminal signal_terminal = {
+    {760.0f, 660.0f, 96.0f, 64.0f, 0x48, 0xd0, 0x70},
+    0xf0, 0xd0, 0x40
 };
 
 static float clamp(float value, float minimum, float maximum)
@@ -92,6 +108,16 @@ static int ranges_overlap(float first_start, float first_end,
                           float second_start, float second_end)
 {
     return first_start < second_end && first_end > second_start;
+}
+
+static int player_overlaps_signal_terminal(void)
+{
+    const WorldRectangle *rectangle = &signal_terminal.rectangle;
+
+    return ranges_overlap(player.x, player.x + player.width, rectangle->x,
+                          rectangle->x + rectangle->width) &&
+           ranges_overlap(player.y, player.y + player.height, rectangle->y,
+                          rectangle->y + rectangle->height);
 }
 
 static float resolve_horizontal(float previous_x, float previous_y,
@@ -178,6 +204,7 @@ void gameplay_state_initialize(void)
     frame_timer_initialize(&frame_timer);
     player_blocked_x = 0;
     player_blocked_y = 0;
+    signal_terminal_activated = 0;
     update_viewport();
 }
 
@@ -194,11 +221,16 @@ void gameplay_state_update(void)
     proposed_y = player.y;
     player.x = resolve_horizontal(previous_x, previous_y, proposed_x);
     player.y = resolve_vertical(player.x, previous_y, proposed_y);
+    if (!signal_terminal_activated && player_overlaps_signal_terminal() &&
+        (input_get_state()->pressed_buttons & PAD_CROSS) != 0) {
+        signal_terminal_activated = 1;
+    }
     update_viewport();
 }
 
 void gameplay_state_render(void)
 {
+    WorldRectangle terminal_rectangle = signal_terminal.rectangle;
     unsigned int index;
 
     video_begin_frame();
@@ -209,6 +241,13 @@ void gameplay_state_render(void)
         draw_world_rectangle(&landmarks[index]);
     }
 
+    if (signal_terminal_activated) {
+        terminal_rectangle.red = signal_terminal.activated_red;
+        terminal_rectangle.green = signal_terminal.activated_green;
+        terminal_rectangle.blue = signal_terminal.activated_blue;
+    }
+    draw_world_rectangle(&terminal_rectangle);
+
     for (index = 0;
          index < sizeof(solid_obstacles) / sizeof(solid_obstacles[0]);
          ++index) {
@@ -216,7 +255,7 @@ void gameplay_state_render(void)
     }
 
     video_draw_text(2, 1,
-                    "Numbers Station\nMilestone 012\nStatic Collision");
+                    "Numbers Station\nMilestone 013\nWorld Interaction");
     video_draw_text(2, 5, "Player world: %d, %d", (int)player.x,
                     (int)player.y);
     video_draw_text(2, 6, "Viewport: %d, %d", (int)viewport_x,
@@ -225,6 +264,11 @@ void gameplay_state_render(void)
                     player_blocked_x ? "yes" : "no",
                     player_blocked_y ? "yes" : "no");
     video_draw_text(2, 9, "D-pad / left stick: Move and slide");
+    if (signal_terminal_activated) {
+        video_draw_text(2, 11, "Signal terminal activated.");
+    } else if (player_overlaps_signal_terminal()) {
+        video_draw_text(2, 11, "Press CROSS to activate.");
+    }
     player_render(&player, viewport_x, viewport_y);
     video_present_frame();
 }

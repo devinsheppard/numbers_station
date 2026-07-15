@@ -230,6 +230,38 @@ input processing, timing, and player drawing are unchanged. There is no
 collision module, map representation, dynamic obstacle, physics response, or
 generalized collision API.
 
+## Fixed world interaction
+
+Milestone 013 defines one signal terminal at world position `(760,660)` with
+dimensions `96×64`. Its single compile-time definition owns the bounds,
+inactive RGB color `(0x48,0xd0,0x70)`, and activated RGB color
+`(0xf0,0xd0,0x40)`. The terminal is near the player start, outside the initial
+player bounds, and separated from every solid obstacle. It is non-solid and is
+never included in collision resolution.
+
+The same terminal rectangle drives rendering and proximity. Player/terminal
+overlap reuses the existing half-open one-dimensional rule on both axes:
+
+```text
+player_start < terminal_end && player_end > terminal_start
+```
+
+Touching an edge does not count as overlap. After the unchanged movement and
+collision update, Gameplay checks the existing primary input state's newly
+pressed mask. Activation occurs only when the player overlaps the terminal and
+`pressed_buttons & PAD_CROSS` is nonzero. Held state is not consulted, so Cross
+pressed before entry cannot activate the terminal until it is released and
+newly pressed while overlapping. Unavailable or disconnected input publishes no
+press transition and cannot activate it.
+
+One Gameplay-local integer stores activation. Initialization clears it; a valid
+Cross transition sets it once, and it remains latched until Gameplay is next
+initialized. Before activation, overlap displays `Press CROSS to activate.`
+After activation, the rectangle changes color and
+`Signal terminal activated.` remains visible. Rendering uses the existing
+viewport-relative clipping path. There is no interaction array, identifier,
+callback, event, trigger, persistence, or generalized interaction interface.
+
 ## Scope
 
 The video module exposes only frame begin, filled rectangle, the single test

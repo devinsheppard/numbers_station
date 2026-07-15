@@ -2,6 +2,16 @@
 
 All notable project changes will be appended here. Do not delete previous entries.
 
+## 2026-07-15 - Milestone 013 Fixed World Interaction
+
+- Added one fixed, visible, non-solid world-space signal terminal.
+- Reused the player and terminal half-open AABBs for proximity testing.
+- Added newly pressed Cross activation with one Gameplay-local latched flag.
+- Added distinct inactive and activated colors plus minimal prompt and success
+  messages.
+- Preserved movement, collision, viewport, texture, and frame-presentation
+  behavior.
+
 ## 2026-07-15 - Milestone 012 Static Obstacle Collision Prototype
 
 - Added four fixed world-space solid rectangles shared by rendering and
