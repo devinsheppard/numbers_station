@@ -192,6 +192,44 @@ is length-clamped to one. Multiplying that final intent by the unchanged
 diagonal, and mixed input cannot exceed the existing maximum speed. World and
 viewport calculations are unchanged.
 
+## Static obstacle collision
+
+Milestone 012 keeps collision entirely in the Gameplay state. Four fixed
+world-space rectangles are the single source of obstacle position, dimensions,
+display color, rendering, and collision. Their `(x, y, width, height)` values
+are `(650,450,36,300)`, `(900,520,300,36)`, `(1040,760,36,180)`, and
+`(1040,904,220,36)`. The last two form a clear L-shaped corner test. Every
+obstacle is at least 36 pixels thick, twice the maximum 18-pixel displacement
+allowed by the existing 180-pixel-per-second speed and 100 ms frame-time cap.
+
+The player and obstacles use world-space axis-aligned bounding boxes with
+half-open boundaries. For each axis, two ranges overlap only when:
+
+```text
+player_start < obstacle_end && player_end > obstacle_start
+```
+
+Touching edges are therefore valid and do not penetrate. Gameplay saves the
+previous player position, calls the existing player update exactly once, and
+then resolves the proposed position. Horizontal movement is resolved first
+using the previous Y range. Rightward motion selects the smallest crossed
+obstacle-left boundary; leftward motion selects the largest crossed
+obstacle-right boundary. This chooses the nearest blocker independently of
+array order.
+
+Vertical movement is then resolved using the horizontally resolved X range.
+Downward motion selects the smallest crossed obstacle-top boundary; upward
+motion selects the largest crossed obstacle-bottom boundary. The resulting
+X-then-Y order is deterministic and allows movement along the unobstructed axis
+at walls and corners. The player remains flush with a blocking edge and can
+move away on the next update.
+
+The player module still performs outer world clamping before this local
+resolution. Viewport calculation, rendering conversion, landmark clipping,
+input processing, timing, and player drawing are unchanged. There is no
+collision module, map representation, dynamic obstacle, physics response, or
+generalized collision API.
+
 ## Scope
 
 The video module exposes only frame begin, filled rectangle, the single test

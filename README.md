@@ -4,9 +4,10 @@ Numbers Station is a PlayStation 2 homebrew project targeting original PS2
 hardware and PCSX2. Development is native on a Raspberry Pi 4 running Ubuntu
 26.04 ARM64. Docker, Windows, WSL, and Tyra are not part of the build workflow.
 
-Milestone 011 adds proportional left analog-stick movement with a fixed radial
-deadzone while preserving D-pad movement, the 1600×1200 scrolling world, the
-verified textured player, and the double-buffered frame lifecycle.
+Milestone 012 adds deterministic collision against four fixed world-space
+rectangles. Local horizontal-then-vertical resolution provides solid boundaries
+and wall sliding while preserving the scrolling world, analog movement,
+textured player, and double-buffered frame lifecycle.
 
 ## Requirements
 
@@ -71,7 +72,8 @@ See `docs/BUILDING.md` for verification and reproducibility details.
 - `src/state_manager.*` — active-state ownership and transitions
 - `src/splash_state.*` — timed launch screen
 - `src/main_menu_state.*` — menu display and START response
-- `src/gameplay_state.*` — Gameplay lifecycle, procedural scene, and viewport
+- `src/gameplay_state.*` — Gameplay lifecycle, procedural scene, viewport, and
+  fixed obstacle collision
 - `src/player.*` — combined digital/analog movement, world clamping, and sprite
 - `src/frame_timer.*` — elapsed gameplay frame time with stall clamping
 - `docs/` — current engineering documentation and archived milestone evidence

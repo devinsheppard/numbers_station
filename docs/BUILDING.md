@@ -59,11 +59,11 @@ Generated files stay below `out/` and are never used as source inputs.
 
 ## Runtime verification
 
-The Milestone 011 ELF should initially display:
+The Milestone 012 ELF should initially display:
 
 ```text
 Numbers Station
-Milestone 011
+Milestone 012
 ```
 
 After approximately three seconds it should display:
@@ -76,39 +76,42 @@ Main Menu
 Press START
 ```
 
-## PCSX2 analog-movement verification
+## PCSX2 static-collision verification
 
 1. Configure a controller or keyboard mapping for PCSX2 controller port 1.
 2. Launch `out/bin/numbers_station.elf` through PCSX2's ELF loader.
 3. Confirm Splash appears immediately and Main Menu replaces it after about
    three seconds without input.
-4. Press START once and confirm Gameplay displays `Analog Movement`, player
-   world X/Y, viewport X/Y, centered left-stick X/Y, movement instructions, and
-   a textured square sprite.
+4. Press START once and confirm Gameplay displays `Static Collision`, player
+   world X/Y, viewport X/Y, blocked-axis diagnostics, four bright solid
+   obstacles, and a textured square sprite.
 5. Confirm the sprite contains a blue checkerboard, pale border and N-shaped
    emblem. Its corner markers must be red at top-left, green at top-right, blue
    at bottom-left, and yellow at bottom-right.
-6. Confirm a centered stick and small motion inside the deadzone produce no
-   drift. Move just outside the deadzone and confirm slow movement begins.
-7. Increase stick deflection gradually and confirm speed rises proportionally;
-   full cardinal and diagonal deflection must not exceed 180 pixels per second.
-8. Confirm D-pad cardinal and diagonal movement remains normalized. Combine and
-   oppose D-pad and analog directions and confirm stable results without
-   exceeding maximum speed.
-9. Hold each direction against its world boundary. Confirm player X remains
+6. Approach every solid rectangle from each reachable side with cardinal
+   D-pad and analog movement. Confirm the player stops flush without entering
+   the obstacle and can move away immediately.
+7. Apply diagonal D-pad and analog movement at horizontal and vertical walls.
+   Confirm the blocked axis stops while the unobstructed axis continues, with
+   no jitter.
+8. Test the L-shaped obstacle corner from multiple directions. Confirm the
+   fixed X-then-Y resolution is repeatable and does not embed or trap the player.
+9. Combine and oppose D-pad and analog input against obstacles. Confirm mixed
+   input cannot force penetration and maximum speed remains unchanged.
+10. Hold each direction against its world boundary. Confirm player X remains
    within `0–1576`, player Y remains within `0–1176`, viewport X remains within
    `0–960`, viewport Y remains within `0–752`, and no outside area is exposed.
-10. Confirm display/draw indices are always opposite and alternate `0/1` then
+11. Confirm display/draw indices are always opposite and alternate `0/1` then
    `1/0` as frames are presented.
-11. Visit all four edges and multiple corners. Confirm corner markers appear,
+12. Visit all four edges and multiple corners. Confirm corner markers appear,
     clipped landmarks remain inside the display, the environment fills every
     frame, and player placement remains correct when the viewport is clamped.
-12. Disconnect or disable the controller and confirm neutral axes, no drift,
+13. Disconnect or disable the controller and confirm neutral axes, no drift,
     crash, or hang. Reconnect it and confirm buttons and analog movement return.
-13. Pause or stall emulation temporarily, then resume. Confirm the player
-   advances no more than 18 pixels from one update, buffer alternation resumes,
-   and the sprite and frame remain complete.
-14. Confirm Gameplay remains active after movement, rendering continues after
+14. Pause or stall emulation temporarily, then move at full speed toward each
+    obstacle orientation. Confirm the 18-pixel capped displacement cannot cross
+    a 36-pixel-or-thicker obstacle.
+15. Confirm Gameplay remains active after movement, rendering continues after
     the textured player, and START does not exit it.
 
 Static ELF inspection confirms the PS2 MIPS executable format. Runtime claims

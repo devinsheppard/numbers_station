@@ -1,7 +1,6 @@
 #include "gameplay_state.h"
 
 #include "frame_timer.h"
-#include "input.h"
 #include "player.h"
 #include "video.h"
 
@@ -26,6 +25,8 @@ static Player player;
 static FrameTimer frame_timer;
 static float viewport_x;
 static float viewport_y;
+static int player_blocked_x;
+static int player_blocked_y;
 
 static const WorldRectangle landmarks[] = {
     {520.0f, 380.0f, 560.0f, 440.0f, 0x18, 0x38, 0x28},
@@ -37,6 +38,13 @@ static const WorldRectangle landmarks[] = {
     {1460.0f, 20.0f, 120.0f, 120.0f, 0x38, 0xb0, 0x58},
     {20.0f, 1060.0f, 120.0f, 120.0f, 0x38, 0x68, 0xb0},
     {1460.0f, 1060.0f, 120.0f, 120.0f, 0xb0, 0x98, 0x38}
+};
+
+static const WorldRectangle solid_obstacles[] = {
+    {650.0f, 450.0f, 36.0f, 300.0f, 0xd0, 0x58, 0x28},
+    {900.0f, 520.0f, 300.0f, 36.0f, 0x30, 0xb8, 0xc8},
+    {1040.0f, 760.0f, 36.0f, 180.0f, 0xd0, 0x38, 0x88},
+    {1040.0f, 904.0f, 220.0f, 36.0f, 0xd0, 0x38, 0x88}
 };
 
 static float clamp(float value, float minimum, float maximum)
@@ -80,23 +88,117 @@ static void draw_world_rectangle(const WorldRectangle *rectangle)
                            rectangle->blue);
 }
 
+static int ranges_overlap(float first_start, float first_end,
+                          float second_start, float second_end)
+{
+    return first_start < second_end && first_end > second_start;
+}
+
+static float resolve_horizontal(float previous_x, float previous_y,
+                                float proposed_x)
+{
+    float resolved_x = proposed_x;
+    unsigned int index;
+
+    player_blocked_x = 0;
+    for (index = 0;
+         index < sizeof(solid_obstacles) / sizeof(solid_obstacles[0]);
+         ++index) {
+        const WorldRectangle *obstacle = &solid_obstacles[index];
+        float obstacle_right = obstacle->x + obstacle->width;
+
+        if (!ranges_overlap(previous_y, previous_y + player.height,
+                            obstacle->y, obstacle->y + obstacle->height)) {
+            continue;
+        }
+
+        if (proposed_x > previous_x &&
+            previous_x + player.width <= obstacle->x &&
+            proposed_x + player.width > obstacle->x) {
+            float boundary = obstacle->x - player.width;
+
+            if (boundary < resolved_x) {
+                resolved_x = boundary;
+                player_blocked_x = 1;
+            }
+        } else if (proposed_x < previous_x && previous_x >= obstacle_right &&
+                   proposed_x < obstacle_right) {
+            if (obstacle_right > resolved_x) {
+                resolved_x = obstacle_right;
+                player_blocked_x = 1;
+            }
+        }
+    }
+
+    return resolved_x;
+}
+
+static float resolve_vertical(float resolved_x, float previous_y,
+                              float proposed_y)
+{
+    float resolved_y = proposed_y;
+    unsigned int index;
+
+    player_blocked_y = 0;
+    for (index = 0;
+         index < sizeof(solid_obstacles) / sizeof(solid_obstacles[0]);
+         ++index) {
+        const WorldRectangle *obstacle = &solid_obstacles[index];
+        float obstacle_bottom = obstacle->y + obstacle->height;
+
+        if (!ranges_overlap(resolved_x, resolved_x + player.width,
+                            obstacle->x, obstacle->x + obstacle->width)) {
+            continue;
+        }
+
+        if (proposed_y > previous_y &&
+            previous_y + player.height <= obstacle->y &&
+            proposed_y + player.height > obstacle->y) {
+            float boundary = obstacle->y - player.height;
+
+            if (boundary < resolved_y) {
+                resolved_y = boundary;
+                player_blocked_y = 1;
+            }
+        } else if (proposed_y < previous_y && previous_y >= obstacle_bottom &&
+                   proposed_y < obstacle_bottom) {
+            if (obstacle_bottom > resolved_y) {
+                resolved_y = obstacle_bottom;
+                player_blocked_y = 1;
+            }
+        }
+    }
+
+    return resolved_y;
+}
+
 void gameplay_state_initialize(void)
 {
     player_initialize(&player);
     frame_timer_initialize(&frame_timer);
+    player_blocked_x = 0;
+    player_blocked_y = 0;
     update_viewport();
 }
 
 void gameplay_state_update(void)
 {
+    float previous_x = player.x;
+    float previous_y = player.y;
+    float proposed_x;
+    float proposed_y;
+
     frame_timer_update(&frame_timer);
     player_update(&player, frame_timer.delta_seconds);
+    proposed_x = player.x;
+    proposed_y = player.y;
+    player.x = resolve_horizontal(previous_x, previous_y, proposed_x);
+    player.y = resolve_vertical(player.x, previous_y, proposed_y);
     update_viewport();
 }
 
 void gameplay_state_render(void)
 {
-    const InputState *input_state = input_get_state();
     unsigned int index;
 
     video_begin_frame();
@@ -107,14 +209,22 @@ void gameplay_state_render(void)
         draw_world_rectangle(&landmarks[index]);
     }
 
-    video_draw_text(2, 1, "Numbers Station\nMilestone 011\nAnalog Movement");
+    for (index = 0;
+         index < sizeof(solid_obstacles) / sizeof(solid_obstacles[0]);
+         ++index) {
+        draw_world_rectangle(&solid_obstacles[index]);
+    }
+
+    video_draw_text(2, 1,
+                    "Numbers Station\nMilestone 012\nStatic Collision");
     video_draw_text(2, 5, "Player world: %d, %d", (int)player.x,
                     (int)player.y);
     video_draw_text(2, 6, "Viewport: %d, %d", (int)viewport_x,
                     (int)viewport_y);
-    video_draw_text(2, 7, "Left stick: %d, %d",
-                    input_state->left_stick_x, input_state->left_stick_y);
-    video_draw_text(2, 9, "D-pad / left stick: Move");
+    video_draw_text(2, 7, "Blocked X/Y: %s / %s",
+                    player_blocked_x ? "yes" : "no",
+                    player_blocked_y ? "yes" : "no");
+    video_draw_text(2, 9, "D-pad / left stick: Move and slide");
     player_render(&player, viewport_x, viewport_y);
     video_present_frame();
 }
@@ -131,4 +241,6 @@ void gameplay_state_shutdown(void)
     frame_timer.delta_milliseconds = 0;
     viewport_x = 0.0f;
     viewport_y = 0.0f;
+    player_blocked_x = 0;
+    player_blocked_y = 0;
 }

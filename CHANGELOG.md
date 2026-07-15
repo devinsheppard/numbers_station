@@ -2,6 +2,16 @@
 
 All notable project changes will be appended here. Do not delete previous entries.
 
+## 2026-07-15 - Milestone 012 Static Obstacle Collision Prototype
+
+- Added four fixed world-space solid rectangles shared by rendering and
+  collision.
+- Added half-open player/obstacle AABB checks with touching edges permitted.
+- Added nearest-boundary horizontal-then-vertical resolution for deterministic
+  stopping, corner behavior, and wall sliding.
+- Preserved player movement, world bounds, viewport behavior, texture rendering,
+  and the established frame lifecycle.
+
 ## 2026-07-15 - Milestone 011 Left Analog Stick Movement
 
 - Added centered signed left-stick values to the existing primary input state.
