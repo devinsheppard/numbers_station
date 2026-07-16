@@ -12,7 +12,8 @@ enum {
     WORLD_WIDTH = 1600,
     WORLD_HEIGHT = 1200,
     VIEWPORT_WIDTH = 640,
-    VIEWPORT_HEIGHT = 448
+    VIEWPORT_HEIGHT = 448,
+    ALL_DOCUMENTS_READ = 0x07
 };
 
 typedef struct WorldRectangle {
@@ -54,6 +55,8 @@ static int signal_terminal_activated;
 static int document_open;
 static const char *open_document_text;
 static unsigned int documents_read;
+static int completion_overlay_open;
+static int player_in_extraction_zone;
 
 static const char objective_activate_terminal[] =
     "Activate the relay terminal.";
@@ -90,6 +93,19 @@ static const SignalBarrier signal_barrier = {
     {900.0f, 620.0f, 36.0f, 220.0f, 0xf0, 0x20, 0x20},
     0x38, 0x48, 0x50
 };
+
+static const WorldRectangle extraction_zone = {
+    1360.0f, 1020.0f, 80.0f, 80.0f, 0x40, 0xd8, 0xd0
+};
+
+static const char completion_text[] =
+    "MISSION COMPLETE\n"
+    "\n"
+    "Transmission source located.\n"
+    "\n"
+    "End of prototype.\n"
+    "\n"
+    "Press CIRCLE to return.";
 
 static const char relay_field_note_text[] =
     "FIELD NOTE\n"
@@ -150,11 +166,7 @@ static const ReadableDocument readable_documents[] = {
 
 static const char *current_objective(void)
 {
-    const unsigned int all_documents_read =
-        (1U << (sizeof(readable_documents) / sizeof(readable_documents[0]))) -
-        1U;
-
-    if (documents_read == all_documents_read) {
+    if (documents_read == ALL_DOCUMENTS_READ) {
         return objective_investigate_source;
     }
     if (signal_terminal_activated) {
@@ -228,6 +240,15 @@ static int player_overlaps_document(const ReadableDocument *document)
                           rectangle->x + rectangle->width) &&
            ranges_overlap(player.y, player.y + player.height, rectangle->y,
                           rectangle->y + rectangle->height);
+}
+
+static int player_overlaps_extraction_zone(void)
+{
+    return ranges_overlap(player.x, player.x + player.width, extraction_zone.x,
+                          extraction_zone.x + extraction_zone.width) &&
+           ranges_overlap(player.y, player.y + player.height,
+                          extraction_zone.y,
+                          extraction_zone.y + extraction_zone.height);
 }
 
 static void consider_horizontal_collision(const WorldRectangle *obstacle,
@@ -340,6 +361,8 @@ void gameplay_state_initialize(void)
     document_open = 0;
     open_document_text = NULL;
     documents_read = 0;
+    completion_overlay_open = 0;
+    player_in_extraction_zone = 0;
     update_viewport();
 }
 
@@ -355,6 +378,12 @@ void gameplay_state_update(void)
         if ((input_get_state()->pressed_buttons & PAD_CIRCLE) != 0) {
             document_open = 0;
             open_document_text = NULL;
+        }
+        return;
+    }
+    if (completion_overlay_open) {
+        if ((input_get_state()->pressed_buttons & PAD_CIRCLE) != 0) {
+            completion_overlay_open = 0;
         }
         return;
     }
@@ -383,6 +412,15 @@ void gameplay_state_update(void)
         }
     }
     update_viewport();
+    {
+        int overlaps_extraction = player_overlaps_extraction_zone();
+
+        if (documents_read == ALL_DOCUMENTS_READ && overlaps_extraction &&
+            !player_in_extraction_zone) {
+            completion_overlay_open = 1;
+        }
+        player_in_extraction_zone = overlaps_extraction;
+    }
 }
 
 void gameplay_state_render(void)
@@ -390,6 +428,15 @@ void gameplay_state_render(void)
     WorldRectangle terminal_rectangle = signal_terminal.rectangle;
     WorldRectangle barrier_rectangle = signal_barrier.rectangle;
     unsigned int index;
+
+    if (completion_overlay_open) {
+        video_begin_frame();
+        video_draw_filled_rect(0.0f, 0.0f, VIEWPORT_WIDTH, VIEWPORT_HEIGHT,
+                               0x08, 0x0c, 0x10);
+        video_draw_text(4, 3, "%s", completion_text);
+        video_present_frame();
+        return;
+    }
 
     if (document_open) {
         video_begin_frame();
@@ -428,6 +475,8 @@ void gameplay_state_render(void)
         draw_world_rectangle(&readable_documents[index].rectangle);
     }
 
+    draw_world_rectangle(&extraction_zone);
+
     for (index = 0;
          index < sizeof(solid_obstacles) / sizeof(solid_obstacles[0]);
          ++index) {
@@ -435,7 +484,7 @@ void gameplay_state_render(void)
     }
 
     video_draw_text(2, 1,
-                    "Numbers Station\nMilestone 017\nFixed Objective");
+                    "Numbers Station\nMilestone 018\nWorld Exit");
     video_draw_text(2, 5, "Player world: %d, %d", (int)player.x,
                     (int)player.y);
     video_draw_text(2, 6, "Viewport: %d, %d", (int)viewport_x,
@@ -479,4 +528,6 @@ void gameplay_state_shutdown(void)
     player_blocked_x = 0;
     player_blocked_y = 0;
     documents_read = 0;
+    completion_overlay_open = 0;
+    player_in_extraction_zone = 0;
 }

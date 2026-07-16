@@ -2,6 +2,16 @@
 
 All notable project changes will be appended here. Do not delete previous entries.
 
+## 2026-07-16 - Milestone 018 World Exit Prototype
+
+- Added one fixed non-solid extraction zone at `(1360,1020)`.
+- Gated entry completion directly on the existing all-documents-read condition.
+- Added a fixed full-screen completion overlay dismissed by newly pressed
+  Circle.
+- Preserved player and world state during the overlay and allowed it to reopen
+  after leaving and re-entering the zone.
+- Added no mission, ending, transition, checkpoint, event, or save architecture.
+
 ## 2026-07-16 - Milestone 017 Fixed Objective Prototype
 
 - Added three compile-time objective strings selected by existing Gameplay

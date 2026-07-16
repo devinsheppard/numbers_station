@@ -59,11 +59,11 @@ Generated files stay below `out/` and are never used as source inputs.
 
 ## Runtime verification
 
-The Milestone 017 ELF should initially display:
+The Milestone 018 ELF should initially display:
 
 ```text
 Numbers Station
-Milestone 017
+Milestone 018
 ```
 
 After approximately three seconds it should display:
@@ -76,13 +76,13 @@ Main Menu
 Press START
 ```
 
-## PCSX2 fixed-objective verification
+## PCSX2 world-exit verification
 
 1. Configure a controller or keyboard mapping for PCSX2 controller port 1.
 2. Launch `out/bin/numbers_station.elf` through PCSX2's ELF loader.
 3. Confirm Splash appears immediately and Main Menu replaces it after about
    three seconds without input.
-4. Press START once and confirm Gameplay displays `Fixed Objective`, player
+4. Press START once and confirm Gameplay displays `World Exit`, player
    world X/Y, viewport X/Y, the terminal, barrier, three pale notes, existing
    obstacles, and textured player.
 5. Confirm the sprite contains a blue checkerboard, pale border and N-shaped
@@ -109,18 +109,34 @@ Press START
 14. Reopen every note and confirm the final objective remains unchanged and no
     note is removed, marked, collected, or made unavailable.
 15. Confirm all three notes retain the same visual and interaction dimensions.
-16. Hold each direction against its world boundary. Confirm player X remains
+16. Find the cyan extraction marker at `(1360,1020)` and confirm it is
+    non-solid, viewport-relative, and visible within its fixed 80×80 bounds.
+17. Enter the extraction zone before reading all three notes. Confirm it has no
+    effect and Gameplay continues normally.
+18. Complete the existing objective chain, leave the zone if necessary, and
+    enter it after the final objective appears. Confirm a dark overlay displays
+    `MISSION COMPLETE`, `Transmission source located.`, `End of prototype.`,
+    and `Press CIRCLE to return.`
+19. Hold movement and Cross while the completion overlay is open. Confirm
+    player, viewport, collision, terminal, barrier, documents, and objective
+    progress remain frozen and the overlay stays open.
+20. Newly press Circle and confirm Gameplay resumes at the exact player and
+    viewport position without a movement jump or immediate overlay reopening.
+21. Leave and re-enter the extraction zone. Confirm the completion overlay may
+    be opened and dismissed again without storing completion state.
+22. Hold each direction against its world boundary. Confirm player X remains
    within `0–1576`, player Y remains within `0–1176`, viewport X remains within
    `0–960`, viewport Y remains within `0–752`, and no outside area is exposed.
-17. Confirm display/draw indices are always opposite and alternate `0/1` then
+23. Confirm display/draw indices are always opposite and alternate `0/1` then
    `1/0` as frames are presented.
-18. Visit all four edges and multiple corners. Confirm corner markers appear,
+24. Visit all four edges and multiple corners. Confirm corner markers appear,
     clipped landmarks remain inside the display, the environment fills every
     frame, and player placement remains correct when the viewport is clamped.
-19. Disconnect or disable the controller near the note and while reading.
-    Confirm no accidental opening or dismissal, drift, crash, or hang.
-20. Confirm Gameplay remains active after repeated reading, rendering continues
-    after the textured player, and START does not exit it.
+25. Disconnect or disable the controller near the notes or extraction zone and
+    while either overlay is open. Confirm no accidental opening or dismissal,
+    drift, crash, or hang.
+26. Confirm Gameplay remains active after repeated reading and extraction,
+    rendering continues after the textured player, and START does not exit it.
 
 Static ELF inspection confirms the PS2 MIPS executable format. Runtime claims
 must be recorded separately for PCSX2 and real hardware; a successful build is

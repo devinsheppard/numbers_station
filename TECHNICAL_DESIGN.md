@@ -362,6 +362,28 @@ journal, event, quest, or generalized objective system. Movement, collision,
 viewport, terminal, barrier, document overlay, frame timing, rendering, texture,
 and double-buffer behavior remain unchanged.
 
+## Fixed world exit
+
+Milestone 018 adds one non-solid `80×80` extraction rectangle at world position
+`(1360,1020)`. The fixed cyan marker is rendered through the existing clipped
+world-rectangle path and scrolls with the unchanged viewport. It does not enter
+collision resolution and is outside the existing solid geometry.
+
+The existing three-bit document mask is also the direct completion condition.
+Before all three bits are set, overlap with the extraction rectangle has no
+effect. After all documents have been opened, crossing from outside to inside
+sets one transient `completion_overlay_open` flag. A second transient inside
+flag prevents the overlay from reopening immediately after dismissal; leaving
+and re-entering the zone can open it again.
+
+While open, the completion overlay follows the proven document-overlay frame
+path: frame timing continues to refresh, Gameplay update returns before movement
+or world changes, the frame is filled with a dark primitive, and only fixed
+completion text is drawn. Newly pressed Circle dismisses it. Player position,
+viewport, terminal, barrier, documents, objective progress, collision, texture,
+and presentation state remain unchanged. There is no completion persistence,
+mission system, ending system, transition, checkpoint, or save behavior.
+
 ## Scope
 
 The video module exposes only frame begin, filled rectangle, the single test
