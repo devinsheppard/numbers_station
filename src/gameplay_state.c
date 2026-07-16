@@ -45,6 +45,7 @@ static float viewport_y;
 static int player_blocked_x;
 static int player_blocked_y;
 static int signal_terminal_activated;
+static int document_open;
 
 static const WorldRectangle landmarks[] = {
     {520.0f, 380.0f, 560.0f, 440.0f, 0x18, 0x38, 0x28},
@@ -74,6 +75,27 @@ static const SignalBarrier signal_barrier = {
     {900.0f, 620.0f, 36.0f, 220.0f, 0xf0, 0x20, 0x20},
     0x38, 0x48, 0x50
 };
+
+static const WorldRectangle field_note = {
+    980.0f, 680.0f, 48.0f, 48.0f, 0xe0, 0xd4, 0xa8
+};
+
+static const char field_note_text[] =
+    "FIELD NOTE\n"
+    "\n"
+    "The relay was powered down again\n"
+    "at 02:13.\n"
+    "\n"
+    "Transmission resumed eleven\n"
+    "minutes later without input.\n"
+    "\n"
+    "No external source found.\n"
+    "\n"
+    "Recommend abandoning the site.\n"
+    "\n"
+    "E. Mercer\n"
+    "\n"
+    "Press CIRCLE to close";
 
 static float clamp(float value, float minimum, float maximum)
 {
@@ -130,6 +152,14 @@ static int player_overlaps_signal_terminal(void)
                           rectangle->x + rectangle->width) &&
            ranges_overlap(player.y, player.y + player.height, rectangle->y,
                           rectangle->y + rectangle->height);
+}
+
+static int player_overlaps_field_note(void)
+{
+    return ranges_overlap(player.x, player.x + player.width, field_note.x,
+                          field_note.x + field_note.width) &&
+           ranges_overlap(player.y, player.y + player.height, field_note.y,
+                          field_note.y + field_note.height);
 }
 
 static void consider_horizontal_collision(const WorldRectangle *obstacle,
@@ -239,6 +269,7 @@ void gameplay_state_initialize(void)
     player_blocked_x = 0;
     player_blocked_y = 0;
     signal_terminal_activated = 0;
+    document_open = 0;
     update_viewport();
 }
 
@@ -250,6 +281,13 @@ void gameplay_state_update(void)
     float proposed_y;
 
     frame_timer_update(&frame_timer);
+    if (document_open) {
+        if ((input_get_state()->pressed_buttons & PAD_CIRCLE) != 0) {
+            document_open = 0;
+        }
+        return;
+    }
+
     player_update(&player, frame_timer.delta_seconds);
     proposed_x = player.x;
     proposed_y = player.y;
@@ -259,6 +297,10 @@ void gameplay_state_update(void)
         (input_get_state()->pressed_buttons & PAD_CROSS) != 0) {
         signal_terminal_activated = 1;
     }
+    if (player_overlaps_field_note() &&
+        (input_get_state()->pressed_buttons & PAD_CROSS) != 0) {
+        document_open = 1;
+    }
     update_viewport();
 }
 
@@ -267,6 +309,15 @@ void gameplay_state_render(void)
     WorldRectangle terminal_rectangle = signal_terminal.rectangle;
     WorldRectangle barrier_rectangle = signal_barrier.rectangle;
     unsigned int index;
+
+    if (document_open) {
+        video_begin_frame();
+        video_draw_filled_rect(0.0f, 0.0f, VIEWPORT_WIDTH, VIEWPORT_HEIGHT,
+                               0x08, 0x0c, 0x10);
+        video_draw_text(4, 3, "%s", field_note_text);
+        video_present_frame();
+        return;
+    }
 
     video_begin_frame();
     video_draw_filled_rect(0.0f, 0.0f, VIEWPORT_WIDTH, VIEWPORT_HEIGHT,
@@ -290,6 +341,8 @@ void gameplay_state_render(void)
     }
     draw_world_rectangle(&barrier_rectangle);
 
+    draw_world_rectangle(&field_note);
+
     for (index = 0;
          index < sizeof(solid_obstacles) / sizeof(solid_obstacles[0]);
          ++index) {
@@ -297,7 +350,7 @@ void gameplay_state_render(void)
     }
 
     video_draw_text(2, 1,
-                    "Numbers Station\nMilestone 014\nSignal Barrier");
+                    "Numbers Station\nMilestone 015\nReadable Document");
     video_draw_text(2, 5, "Player world: %d, %d", (int)player.x,
                     (int)player.y);
     video_draw_text(2, 6, "Viewport: %d, %d", (int)viewport_x,
@@ -312,6 +365,9 @@ void gameplay_state_render(void)
         video_draw_text(2, 11, "Signal terminal activated.");
     } else if (player_overlaps_signal_terminal()) {
         video_draw_text(2, 11, "Press CROSS to activate.");
+    }
+    if (player_overlaps_field_note()) {
+        video_draw_text(2, 12, "Press CROSS to read.");
     }
     player_render(&player, viewport_x, viewport_y);
     video_present_frame();

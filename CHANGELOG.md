@@ -2,6 +2,17 @@
 
 All notable project changes will be appended here. Do not delete previous entries.
 
+## 2026-07-16 - Milestone 015 Fixed Readable Document
+
+- Added one fixed, pale, non-solid field note beyond the signal barrier.
+- Added newly pressed Cross reading and newly pressed Circle dismissal.
+- Added a full-screen dark overlay with deterministic compile-time narrative
+  text.
+- Froze gameplay while reading while continuing frame-timer refreshes to avoid
+  a movement jump on dismissal.
+- Preserved the player, viewport, terminal, barrier, collision, texture, and
+  presentation states across reading.
+
 ## 2026-07-16 - Milestone 014 Signal-Controlled Barrier
 
 - Added one fixed world-space barrier controlled directly by terminal

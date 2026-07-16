@@ -59,11 +59,11 @@ Generated files stay below `out/` and are never used as source inputs.
 
 ## Runtime verification
 
-The Milestone 014 ELF should initially display:
+The Milestone 015 ELF should initially display:
 
 ```text
 Numbers Station
-Milestone 014
+Milestone 015
 ```
 
 After approximately three seconds it should display:
@@ -76,43 +76,44 @@ Main Menu
 Press START
 ```
 
-## PCSX2 signal-barrier verification
+## PCSX2 readable-document verification
 
 1. Configure a controller or keyboard mapping for PCSX2 controller port 1.
 2. Launch `out/bin/numbers_station.elf` through PCSX2's ELF loader.
 3. Confirm Splash appears immediately and Main Menu replaces it after about
    three seconds without input.
-4. Press START once and confirm Gameplay displays `Signal Barrier`, player
-   world X/Y, viewport X/Y, blocked-axis diagnostics, four existing obstacles,
-   a green terminal, a bright-red barrier, and a textured square sprite.
+4. Press START once and confirm Gameplay displays `Readable Document`, player
+   world X/Y, viewport X/Y, the terminal, barrier, pale field note, existing
+   obstacles, and textured player.
 5. Confirm the sprite contains a blue checkerboard, pale border and N-shaped
    emblem. Its corner markers must be red at top-left, green at top-right, blue
    at bottom-left, and yellow at bottom-right.
-6. Confirm `Barrier: ACTIVE`, then approach the barrier from both sides with
-   D-pad and analog movement. Confirm it stops the player flush, supports
-   diagonal wall sliding, and cannot be crossed with mixed input.
-7. Recheck all four existing obstacles and the L-shaped corner. Confirm their
-   stopping and wall sliding remain unchanged.
-8. Enter the terminal, confirm its prompt, and newly press Cross. Confirm the
-   terminal turns yellow, its activation message appears, the barrier turns
-   dark gray, and status changes to `Barrier: DISABLED` in that rendered frame.
-9. Cross the disabled barrier's former collision bounds from both sides.
-   Confirm no invisible collision remains.
-10. Revisit the terminal and press Cross again. Confirm neither terminal nor
-    barrier state toggles or resets.
-11. Hold each direction against its world boundary. Confirm player X remains
+6. Activate the terminal and cross the disabled barrier. Confirm all existing
+   prompt, latch, visual, and collision behavior remains correct.
+7. Approach the pale field note beyond the barrier. Confirm it is non-solid,
+   scrolls with the world, and displays no prompt outside its exact bounds.
+8. Hold Cross before entering and confirm the note does not open. Release Cross
+   while overlapping, confirm `Press CROSS to read.`, then newly press Cross.
+9. Confirm a dark full-screen overlay displays the complete fixed field-note
+   text and no gameplay world rendering.
+10. Hold movement and Cross while reading. Confirm player, viewport, terminal,
+    barrier, and collision state remain unchanged and the overlay stays open.
+11. Newly press Circle. Confirm Gameplay resumes immediately at the exact player
+    and viewport position without a movement jump.
+12. Leave and return to the note, then open and dismiss it again. Confirm it
+    remains visible and repeatable with no collected or read state.
+13. Hold each direction against its world boundary. Confirm player X remains
    within `0–1576`, player Y remains within `0–1176`, viewport X remains within
    `0–960`, viewport Y remains within `0–752`, and no outside area is exposed.
-12. Confirm display/draw indices are always opposite and alternate `0/1` then
+14. Confirm display/draw indices are always opposite and alternate `0/1` then
    `1/0` as frames are presented.
-13. Visit all four edges and multiple corners. Confirm corner markers appear,
+15. Visit all four edges and multiple corners. Confirm corner markers appear,
     clipped landmarks remain inside the display, the environment fills every
     frame, and player placement remains correct when the viewport is clamped.
-14. Disconnect or disable the controller near the terminal and confirm no
-    accidental activation, drift, crash, or hang. Reconnect and confirm input
-    returns safely.
-15. Confirm Gameplay remains active after barrier traversal, rendering
-    continues after the textured player, and START does not exit it.
+16. Disconnect or disable the controller near the note and while reading.
+    Confirm no accidental opening or dismissal, drift, crash, or hang.
+17. Confirm Gameplay remains active after repeated reading, rendering continues
+    after the textured player, and START does not exit it.
 
 Static ELF inspection confirms the PS2 MIPS executable format. Runtime claims
 must be recorded separately for PCSX2 and real hardware; a successful build is

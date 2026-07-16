@@ -292,6 +292,34 @@ renders the terminal activated and barrier disabled. Every subsequent update
 omits the barrier from both collision axes. There is no toggle, delay, door,
 trigger, callback, event, conditional-collision framework, or persistence.
 
+## Fixed readable document
+
+Milestone 015 defines one pale field note at world position `(980,680)` with
+dimensions `48×48` and RGB color `(0xe0,0xd4,0xa8)`. The same compile-time
+rectangle drives world rendering and player proximity through the existing
+half-open overlap rule. It is beyond the signal barrier, outside all solid
+geometry, and never participates in collision.
+
+The note's complete narrative is one compile-time ASCII string. While normal
+Gameplay is active, overlap displays `Press CROSS to read.` A newly pressed
+Cross opens the note; held state is not used, so holding Cross before entry
+cannot open it. The note remains in the world and has no read, collected,
+inventory, or persistence state.
+
+One Gameplay-local integer, `document_open`, represents the temporary reading
+overlay and is cleared during Gameplay initialization. While it is nonzero,
+the update still calls `frame_timer_update` so elapsed time cannot accumulate,
+then skips player movement, collision, terminal interaction, barrier changes,
+document opening, and viewport calculation. A newly pressed Circle clears the
+flag; Cross and movement controls have no effect while reading.
+
+The reading render path begins and presents a normal double-buffered frame,
+fills the complete 640×448 draw buffer with a dark rectangle, and draws only
+the fixed text through the existing debug renderer. Dismissal returns directly
+to normal rendering with player, viewport, terminal, and barrier values
+unchanged. There is no application state, document framework, text scrolling,
+UI system, collection, or save behavior.
+
 ## Scope
 
 The video module exposes only frame begin, filled rectangle, the single test
