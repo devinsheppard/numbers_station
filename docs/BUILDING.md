@@ -59,11 +59,11 @@ Generated files stay below `out/` and are never used as source inputs.
 
 ## Runtime verification
 
-The Milestone 013 ELF should initially display:
+The Milestone 014 ELF should initially display:
 
 ```text
 Numbers Station
-Milestone 013
+Milestone 014
 ```
 
 After approximately three seconds it should display:
@@ -76,29 +76,30 @@ Main Menu
 Press START
 ```
 
-## PCSX2 fixed-interaction verification
+## PCSX2 signal-barrier verification
 
 1. Configure a controller or keyboard mapping for PCSX2 controller port 1.
 2. Launch `out/bin/numbers_station.elf` through PCSX2's ELF loader.
 3. Confirm Splash appears immediately and Main Menu replaces it after about
    three seconds without input.
-4. Press START once and confirm Gameplay displays `World Interaction`, player
-   world X/Y, viewport X/Y, blocked-axis diagnostics, four solid obstacles, a
-   green signal terminal, and a textured square sprite.
+4. Press START once and confirm Gameplay displays `Signal Barrier`, player
+   world X/Y, viewport X/Y, blocked-axis diagnostics, four existing obstacles,
+   a green terminal, a bright-red barrier, and a textured square sprite.
 5. Confirm the sprite contains a blue checkerboard, pale border and N-shaped
    emblem. Its corner markers must be red at top-left, green at top-right, blue
    at bottom-left, and yellow at bottom-right.
-6. Press Cross while outside the terminal and confirm nothing changes. Hold
-   Cross, enter the terminal, and confirm it still does not activate.
-7. Release Cross while overlapping. Confirm `Press CROSS to activate.` appears,
-   then newly press Cross and confirm the terminal changes from green to yellow
-   and displays `Signal terminal activated.`
-8. Leave and revisit the terminal. Confirm activation remains latched and
-   additional Cross presses do not create another state change or message.
-9. Move through the terminal from every direction and confirm it never blocks
-   movement. Confirm its visible bounds exactly match the prompt boundary.
-10. Recheck obstacle stopping, wall sliding, and the L-shaped corner with D-pad
-    and analog movement. Confirm collision remains unchanged.
+6. Confirm `Barrier: ACTIVE`, then approach the barrier from both sides with
+   D-pad and analog movement. Confirm it stops the player flush, supports
+   diagonal wall sliding, and cannot be crossed with mixed input.
+7. Recheck all four existing obstacles and the L-shaped corner. Confirm their
+   stopping and wall sliding remain unchanged.
+8. Enter the terminal, confirm its prompt, and newly press Cross. Confirm the
+   terminal turns yellow, its activation message appears, the barrier turns
+   dark gray, and status changes to `Barrier: DISABLED` in that rendered frame.
+9. Cross the disabled barrier's former collision bounds from both sides.
+   Confirm no invisible collision remains.
+10. Revisit the terminal and press Cross again. Confirm neither terminal nor
+    barrier state toggles or resets.
 11. Hold each direction against its world boundary. Confirm player X remains
    within `0–1576`, player Y remains within `0–1176`, viewport X remains within
    `0–960`, viewport Y remains within `0–752`, and no outside area is exposed.
@@ -110,8 +111,8 @@ Press START
 14. Disconnect or disable the controller near the terminal and confirm no
     accidental activation, drift, crash, or hang. Reconnect and confirm input
     returns safely.
-15. Confirm Gameplay remains active after interaction, rendering continues after
-    the textured player, and START does not exit it.
+15. Confirm Gameplay remains active after barrier traversal, rendering
+    continues after the textured player, and START does not exit it.
 
 Static ELF inspection confirms the PS2 MIPS executable format. Runtime claims
 must be recorded separately for PCSX2 and real hardware; a successful build is

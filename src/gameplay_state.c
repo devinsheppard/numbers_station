@@ -31,6 +31,13 @@ typedef struct SignalTerminal {
     unsigned char activated_blue;
 } SignalTerminal;
 
+typedef struct SignalBarrier {
+    WorldRectangle rectangle;
+    unsigned char disabled_red;
+    unsigned char disabled_green;
+    unsigned char disabled_blue;
+} SignalBarrier;
+
 static Player player;
 static FrameTimer frame_timer;
 static float viewport_x;
@@ -61,6 +68,11 @@ static const WorldRectangle solid_obstacles[] = {
 static const SignalTerminal signal_terminal = {
     {760.0f, 660.0f, 96.0f, 64.0f, 0x48, 0xd0, 0x70},
     0xf0, 0xd0, 0x40
+};
+
+static const SignalBarrier signal_barrier = {
+    {900.0f, 620.0f, 36.0f, 220.0f, 0xf0, 0x20, 0x20},
+    0x38, 0x48, 0x50
 };
 
 static float clamp(float value, float minimum, float maximum)
@@ -120,6 +132,35 @@ static int player_overlaps_signal_terminal(void)
                           rectangle->y + rectangle->height);
 }
 
+static void consider_horizontal_collision(const WorldRectangle *obstacle,
+                                          float previous_x, float previous_y,
+                                          float proposed_x, float *resolved_x)
+{
+    float obstacle_right = obstacle->x + obstacle->width;
+
+    if (!ranges_overlap(previous_y, previous_y + player.height, obstacle->y,
+                        obstacle->y + obstacle->height)) {
+        return;
+    }
+
+    if (proposed_x > previous_x &&
+        previous_x + player.width <= obstacle->x &&
+        proposed_x + player.width > obstacle->x) {
+        float boundary = obstacle->x - player.width;
+
+        if (boundary < *resolved_x) {
+            *resolved_x = boundary;
+            player_blocked_x = 1;
+        }
+    } else if (proposed_x < previous_x && previous_x >= obstacle_right &&
+               proposed_x < obstacle_right) {
+        if (obstacle_right > *resolved_x) {
+            *resolved_x = obstacle_right;
+            player_blocked_x = 1;
+        }
+    }
+}
+
 static float resolve_horizontal(float previous_x, float previous_y,
                                 float proposed_x)
 {
@@ -130,33 +171,44 @@ static float resolve_horizontal(float previous_x, float previous_y,
     for (index = 0;
          index < sizeof(solid_obstacles) / sizeof(solid_obstacles[0]);
          ++index) {
-        const WorldRectangle *obstacle = &solid_obstacles[index];
-        float obstacle_right = obstacle->x + obstacle->width;
-
-        if (!ranges_overlap(previous_y, previous_y + player.height,
-                            obstacle->y, obstacle->y + obstacle->height)) {
-            continue;
-        }
-
-        if (proposed_x > previous_x &&
-            previous_x + player.width <= obstacle->x &&
-            proposed_x + player.width > obstacle->x) {
-            float boundary = obstacle->x - player.width;
-
-            if (boundary < resolved_x) {
-                resolved_x = boundary;
-                player_blocked_x = 1;
-            }
-        } else if (proposed_x < previous_x && previous_x >= obstacle_right &&
-                   proposed_x < obstacle_right) {
-            if (obstacle_right > resolved_x) {
-                resolved_x = obstacle_right;
-                player_blocked_x = 1;
-            }
-        }
+        consider_horizontal_collision(&solid_obstacles[index], previous_x,
+                                      previous_y, proposed_x, &resolved_x);
+    }
+    if (!signal_terminal_activated) {
+        consider_horizontal_collision(&signal_barrier.rectangle, previous_x,
+                                      previous_y, proposed_x, &resolved_x);
     }
 
     return resolved_x;
+}
+
+static void consider_vertical_collision(const WorldRectangle *obstacle,
+                                        float resolved_x, float previous_y,
+                                        float proposed_y, float *resolved_y)
+{
+    float obstacle_bottom = obstacle->y + obstacle->height;
+
+    if (!ranges_overlap(resolved_x, resolved_x + player.width, obstacle->x,
+                        obstacle->x + obstacle->width)) {
+        return;
+    }
+
+    if (proposed_y > previous_y &&
+        previous_y + player.height <= obstacle->y &&
+        proposed_y + player.height > obstacle->y) {
+        float boundary = obstacle->y - player.height;
+
+        if (boundary < *resolved_y) {
+            *resolved_y = boundary;
+            player_blocked_y = 1;
+        }
+    } else if (proposed_y < previous_y && previous_y >= obstacle_bottom &&
+               proposed_y < obstacle_bottom) {
+        if (obstacle_bottom > *resolved_y) {
+            *resolved_y = obstacle_bottom;
+            player_blocked_y = 1;
+        }
+    }
 }
 
 static float resolve_vertical(float resolved_x, float previous_y,
@@ -169,30 +221,12 @@ static float resolve_vertical(float resolved_x, float previous_y,
     for (index = 0;
          index < sizeof(solid_obstacles) / sizeof(solid_obstacles[0]);
          ++index) {
-        const WorldRectangle *obstacle = &solid_obstacles[index];
-        float obstacle_bottom = obstacle->y + obstacle->height;
-
-        if (!ranges_overlap(resolved_x, resolved_x + player.width,
-                            obstacle->x, obstacle->x + obstacle->width)) {
-            continue;
-        }
-
-        if (proposed_y > previous_y &&
-            previous_y + player.height <= obstacle->y &&
-            proposed_y + player.height > obstacle->y) {
-            float boundary = obstacle->y - player.height;
-
-            if (boundary < resolved_y) {
-                resolved_y = boundary;
-                player_blocked_y = 1;
-            }
-        } else if (proposed_y < previous_y && previous_y >= obstacle_bottom &&
-                   proposed_y < obstacle_bottom) {
-            if (obstacle_bottom > resolved_y) {
-                resolved_y = obstacle_bottom;
-                player_blocked_y = 1;
-            }
-        }
+        consider_vertical_collision(&solid_obstacles[index], resolved_x,
+                                    previous_y, proposed_y, &resolved_y);
+    }
+    if (!signal_terminal_activated) {
+        consider_vertical_collision(&signal_barrier.rectangle, resolved_x,
+                                    previous_y, proposed_y, &resolved_y);
     }
 
     return resolved_y;
@@ -231,6 +265,7 @@ void gameplay_state_update(void)
 void gameplay_state_render(void)
 {
     WorldRectangle terminal_rectangle = signal_terminal.rectangle;
+    WorldRectangle barrier_rectangle = signal_barrier.rectangle;
     unsigned int index;
 
     video_begin_frame();
@@ -248,6 +283,13 @@ void gameplay_state_render(void)
     }
     draw_world_rectangle(&terminal_rectangle);
 
+    if (signal_terminal_activated) {
+        barrier_rectangle.red = signal_barrier.disabled_red;
+        barrier_rectangle.green = signal_barrier.disabled_green;
+        barrier_rectangle.blue = signal_barrier.disabled_blue;
+    }
+    draw_world_rectangle(&barrier_rectangle);
+
     for (index = 0;
          index < sizeof(solid_obstacles) / sizeof(solid_obstacles[0]);
          ++index) {
@@ -255,7 +297,7 @@ void gameplay_state_render(void)
     }
 
     video_draw_text(2, 1,
-                    "Numbers Station\nMilestone 013\nWorld Interaction");
+                    "Numbers Station\nMilestone 014\nSignal Barrier");
     video_draw_text(2, 5, "Player world: %d, %d", (int)player.x,
                     (int)player.y);
     video_draw_text(2, 6, "Viewport: %d, %d", (int)viewport_x,
@@ -264,6 +306,8 @@ void gameplay_state_render(void)
                     player_blocked_x ? "yes" : "no",
                     player_blocked_y ? "yes" : "no");
     video_draw_text(2, 9, "D-pad / left stick: Move and slide");
+    video_draw_text(2, 10, "Barrier: %s",
+                    signal_terminal_activated ? "DISABLED" : "ACTIVE");
     if (signal_terminal_activated) {
         video_draw_text(2, 11, "Signal terminal activated.");
     } else if (player_overlaps_signal_terminal()) {

@@ -2,6 +2,18 @@
 
 All notable project changes will be appended here. Do not delete previous entries.
 
+## 2026-07-16 - Milestone 014 Signal-Controlled Barrier
+
+- Added one fixed world-space barrier controlled directly by terminal
+  activation.
+- Added bright-red active and dark-gray disabled barrier rendering.
+- Included the active barrier in the same nearest-boundary collision decision
+  as the four existing obstacles.
+- Removed barrier collision immediately after terminal activation without a
+  second state flag or delayed transition.
+- Preserved terminal, movement, collision, viewport, texture, and presentation
+  behavior.
+
 ## 2026-07-15 - Milestone 013 Fixed World Interaction
 
 - Added one fixed, visible, non-solid world-space signal terminal.

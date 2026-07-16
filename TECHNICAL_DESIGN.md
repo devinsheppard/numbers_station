@@ -262,6 +262,36 @@ After activation, the rectangle changes color and
 viewport-relative clipping path. There is no interaction array, identifier,
 callback, event, trigger, persistence, or generalized interaction interface.
 
+## Signal-controlled barrier
+
+Milestone 014 defines one barrier at world position `(900,620)` with dimensions
+`36×220`. Its single compile-time definition owns its bounds, bright-red active
+RGB color `(0xf0,0x20,0x20)`, and dark-gray disabled RGB color
+`(0x38,0x48,0x50)`. The same bounds drive both rendering states and active
+collision. The barrier is outside the player start, terminal, and existing
+obstacles, and can be approached from both sides.
+
+Barrier state derives directly from the existing terminal flag. When
+`signal_terminal_activated == 0`, the barrier renders active and participates
+in collision. When the flag is nonzero, it renders disabled and is omitted from
+collision. No separate barrier state exists. Gameplay initialization already
+clears the terminal flag, which restores the active barrier on every new entry.
+
+The horizontal and vertical resolvers each retain one proposed result while a
+small local helper evaluates a collision candidate. Every existing obstacle is
+evaluated, and the barrier is evaluated through the same helper only while
+active. Right and downward movement retain the smallest crossed boundary;
+left and upward movement retain the largest. The resulting nearest blocker is
+therefore selected across all active candidates independently of evaluation
+order. Collision is still resolved once, horizontal then vertical, with the
+same half-open comparisons and wall sliding.
+
+Terminal activation is evaluated after movement and collision in the existing
+update. The valid newly pressed Cross sets the terminal flag, so that frame
+renders the terminal activated and barrier disabled. Every subsequent update
+omits the barrier from both collision axes. There is no toggle, delay, door,
+trigger, callback, event, conditional-collision framework, or persistence.
+
 ## Scope
 
 The video module exposes only frame begin, filled rectangle, the single test
