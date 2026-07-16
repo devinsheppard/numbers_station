@@ -342,6 +342,26 @@ dismissal, and double-buffered render lifecycle remain single shared code paths.
 Only the selected compile-time text differs. All notes remain available and may
 be opened repeatedly in any order.
 
+## Fixed objective progression
+
+Milestone 017 adds three compile-time objective strings and one Gameplay-local
+three-bit read mask. Normal Gameplay renders the current string unobtrusively;
+the reading overlay remains unchanged and continues to display only the selected
+document text.
+
+The initial objective is `Activate the relay terminal.` Activating the existing
+terminal advances it to `Search beyond the barrier.` Opening a document through
+the proven newly pressed Cross path sets that document's bit. Once all three
+bits have been set, the objective becomes `Investigate the transmission source.`
+The final condition takes precedence over the terminal condition, while repeat
+readings simply set an already-set bit and cause no further change.
+
+Gameplay initialization clears the mask, restoring the initial sequence for a
+new Gameplay entry. The mask is not saved and is not a collection, inventory,
+journal, event, quest, or generalized objective system. Movement, collision,
+viewport, terminal, barrier, document overlay, frame timing, rendering, texture,
+and double-buffer behavior remain unchanged.
+
 ## Scope
 
 The video module exposes only frame begin, filled rectangle, the single test

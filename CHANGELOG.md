@@ -2,6 +2,17 @@
 
 All notable project changes will be appended here. Do not delete previous entries.
 
+## 2026-07-16 - Milestone 017 Fixed Objective Prototype
+
+- Added three compile-time objective strings selected by existing Gameplay
+  state.
+- Added one Gameplay-local three-bit mask recording which fixed notes have been
+  opened during the current Gameplay entry.
+- Advanced the objective after terminal activation and after all three notes
+  have been read at least once.
+- Kept every document rereadable and added no quest, journal, collection, save,
+  event, or generalized objective architecture.
+
 ## 2026-07-16 - Milestone 016 Multiple Fixed Readable Documents
 
 - Expanded the single field note into three fixed 48×48 world documents.

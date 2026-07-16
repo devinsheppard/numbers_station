@@ -59,11 +59,11 @@ Generated files stay below `out/` and are never used as source inputs.
 
 ## Runtime verification
 
-The Milestone 016 ELF should initially display:
+The Milestone 017 ELF should initially display:
 
 ```text
 Numbers Station
-Milestone 016
+Milestone 017
 ```
 
 After approximately three seconds it should display:
@@ -76,44 +76,50 @@ Main Menu
 Press START
 ```
 
-## PCSX2 multiple-document verification
+## PCSX2 fixed-objective verification
 
 1. Configure a controller or keyboard mapping for PCSX2 controller port 1.
 2. Launch `out/bin/numbers_station.elf` through PCSX2's ELF loader.
 3. Confirm Splash appears immediately and Main Menu replaces it after about
    three seconds without input.
-4. Press START once and confirm Gameplay displays `World Documents`, player
+4. Press START once and confirm Gameplay displays `Fixed Objective`, player
    world X/Y, viewport X/Y, the terminal, barrier, three pale notes, existing
    obstacles, and textured player.
 5. Confirm the sprite contains a blue checkerboard, pale border and N-shaped
    emblem. Its corner markers must be red at top-left, green at top-right, blue
    at bottom-left, and yellow at bottom-right.
-6. Visit the notes at `(260,260)`, `(980,680)`, and `(1320,940)` in any order.
+6. Confirm the initial status reads
+   `Objective: Activate the relay terminal.`
+7. Read any accessible note before activating the terminal and confirm the
+   initial objective remains unchanged.
+8. Activate the relay terminal and confirm the objective changes automatically
+   to `Objective: Search beyond the barrier.`
+9. Visit the notes at `(260,260)`, `(980,680)`, and `(1320,940)` in any order.
    Confirm each is pale, non-solid, viewport-relative, and prompts only during
    its exact half-open overlap.
-7. Open each note with newly pressed Cross and verify that it displays its own
+10. Open each note with newly pressed Cross and verify that it displays its own
    complete text: `MAINTENANCE LOG`, `FIELD NOTE`, or `FREQUENCY RECORD`.
-8. For every note, hold movement and Cross while reading. Confirm the shared
+11. Confirm the objective remains `Search beyond the barrier.` until all three
+    distinct notes have been opened, then changes to
+    `Objective: Investigate the transmission source.`
+12. For every note, hold movement and Cross while reading. Confirm the shared
    overlay stays open and all Gameplay values remain frozen.
-9. Newly press Circle after each reading. Confirm Gameplay resumes at the exact
+13. Newly press Circle after each reading. Confirm Gameplay resumes at the exact
    player and viewport position without a movement jump.
-10. Read the notes in a different order, reopen each one, and confirm no note is
-    removed, marked, collected, or made unavailable.
-11. Activate the terminal and cross the disabled barrier while visiting the
-    original field note. Confirm terminal, barrier, and collision behavior are
-    unchanged.
-12. Confirm all three notes retain the same visual and interaction dimensions.
-13. Hold each direction against its world boundary. Confirm player X remains
+14. Reopen every note and confirm the final objective remains unchanged and no
+    note is removed, marked, collected, or made unavailable.
+15. Confirm all three notes retain the same visual and interaction dimensions.
+16. Hold each direction against its world boundary. Confirm player X remains
    within `0–1576`, player Y remains within `0–1176`, viewport X remains within
    `0–960`, viewport Y remains within `0–752`, and no outside area is exposed.
-14. Confirm display/draw indices are always opposite and alternate `0/1` then
+17. Confirm display/draw indices are always opposite and alternate `0/1` then
    `1/0` as frames are presented.
-15. Visit all four edges and multiple corners. Confirm corner markers appear,
+18. Visit all four edges and multiple corners. Confirm corner markers appear,
     clipped landmarks remain inside the display, the environment fills every
     frame, and player placement remains correct when the viewport is clamped.
-16. Disconnect or disable the controller near the note and while reading.
+19. Disconnect or disable the controller near the note and while reading.
     Confirm no accidental opening or dismissal, drift, crash, or hang.
-17. Confirm Gameplay remains active after repeated reading, rendering continues
+20. Confirm Gameplay remains active after repeated reading, rendering continues
     after the textured player, and START does not exit it.
 
 Static ELF inspection confirms the PS2 MIPS executable format. Runtime claims

@@ -53,6 +53,14 @@ static int player_blocked_y;
 static int signal_terminal_activated;
 static int document_open;
 static const char *open_document_text;
+static unsigned int documents_read;
+
+static const char objective_activate_terminal[] =
+    "Activate the relay terminal.";
+static const char objective_search_beyond_barrier[] =
+    "Search beyond the barrier.";
+static const char objective_investigate_source[] =
+    "Investigate the transmission source.";
 
 static const WorldRectangle landmarks[] = {
     {520.0f, 380.0f, 560.0f, 440.0f, 0x18, 0x38, 0x28},
@@ -139,6 +147,21 @@ static const ReadableDocument readable_documents[] = {
     {{1320.0f, 940.0f, 48.0f, 48.0f, 0xe0, 0xd4, 0xa8},
      frequency_record_text}
 };
+
+static const char *current_objective(void)
+{
+    const unsigned int all_documents_read =
+        (1U << (sizeof(readable_documents) / sizeof(readable_documents[0]))) -
+        1U;
+
+    if (documents_read == all_documents_read) {
+        return objective_investigate_source;
+    }
+    if (signal_terminal_activated) {
+        return objective_search_beyond_barrier;
+    }
+    return objective_activate_terminal;
+}
 
 static float clamp(float value, float minimum, float maximum)
 {
@@ -316,6 +339,7 @@ void gameplay_state_initialize(void)
     signal_terminal_activated = 0;
     document_open = 0;
     open_document_text = NULL;
+    documents_read = 0;
     update_viewport();
 }
 
@@ -353,6 +377,7 @@ void gameplay_state_update(void)
             if (player_overlaps_document(&readable_documents[index])) {
                 document_open = 1;
                 open_document_text = readable_documents[index].text;
+                documents_read |= 1U << index;
                 break;
             }
         }
@@ -410,7 +435,7 @@ void gameplay_state_render(void)
     }
 
     video_draw_text(2, 1,
-                    "Numbers Station\nMilestone 016\nWorld Documents");
+                    "Numbers Station\nMilestone 017\nFixed Objective");
     video_draw_text(2, 5, "Player world: %d, %d", (int)player.x,
                     (int)player.y);
     video_draw_text(2, 6, "Viewport: %d, %d", (int)viewport_x,
@@ -434,6 +459,7 @@ void gameplay_state_render(void)
             break;
         }
     }
+    video_draw_text(2, 14, "Objective: %s", current_objective());
     player_render(&player, viewport_x, viewport_y);
     video_present_frame();
 }
@@ -452,4 +478,5 @@ void gameplay_state_shutdown(void)
     viewport_y = 0.0f;
     player_blocked_x = 0;
     player_blocked_y = 0;
+    documents_read = 0;
 }
