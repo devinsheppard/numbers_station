@@ -59,11 +59,11 @@ Generated files stay below `out/` and are never used as source inputs.
 
 ## Runtime verification
 
-The Milestone 015 ELF should initially display:
+The Milestone 016 ELF should initially display:
 
 ```text
 Numbers Station
-Milestone 015
+Milestone 016
 ```
 
 After approximately three seconds it should display:
@@ -76,32 +76,33 @@ Main Menu
 Press START
 ```
 
-## PCSX2 readable-document verification
+## PCSX2 multiple-document verification
 
 1. Configure a controller or keyboard mapping for PCSX2 controller port 1.
 2. Launch `out/bin/numbers_station.elf` through PCSX2's ELF loader.
 3. Confirm Splash appears immediately and Main Menu replaces it after about
    three seconds without input.
-4. Press START once and confirm Gameplay displays `Readable Document`, player
-   world X/Y, viewport X/Y, the terminal, barrier, pale field note, existing
+4. Press START once and confirm Gameplay displays `World Documents`, player
+   world X/Y, viewport X/Y, the terminal, barrier, three pale notes, existing
    obstacles, and textured player.
 5. Confirm the sprite contains a blue checkerboard, pale border and N-shaped
    emblem. Its corner markers must be red at top-left, green at top-right, blue
    at bottom-left, and yellow at bottom-right.
-6. Activate the terminal and cross the disabled barrier. Confirm all existing
-   prompt, latch, visual, and collision behavior remains correct.
-7. Approach the pale field note beyond the barrier. Confirm it is non-solid,
-   scrolls with the world, and displays no prompt outside its exact bounds.
-8. Hold Cross before entering and confirm the note does not open. Release Cross
-   while overlapping, confirm `Press CROSS to read.`, then newly press Cross.
-9. Confirm a dark full-screen overlay displays the complete fixed field-note
-   text and no gameplay world rendering.
-10. Hold movement and Cross while reading. Confirm player, viewport, terminal,
-    barrier, and collision state remain unchanged and the overlay stays open.
-11. Newly press Circle. Confirm Gameplay resumes immediately at the exact player
-    and viewport position without a movement jump.
-12. Leave and return to the note, then open and dismiss it again. Confirm it
-    remains visible and repeatable with no collected or read state.
+6. Visit the notes at `(260,260)`, `(980,680)`, and `(1320,940)` in any order.
+   Confirm each is pale, non-solid, viewport-relative, and prompts only during
+   its exact half-open overlap.
+7. Open each note with newly pressed Cross and verify that it displays its own
+   complete text: `MAINTENANCE LOG`, `FIELD NOTE`, or `FREQUENCY RECORD`.
+8. For every note, hold movement and Cross while reading. Confirm the shared
+   overlay stays open and all Gameplay values remain frozen.
+9. Newly press Circle after each reading. Confirm Gameplay resumes at the exact
+   player and viewport position without a movement jump.
+10. Read the notes in a different order, reopen each one, and confirm no note is
+    removed, marked, collected, or made unavailable.
+11. Activate the terminal and cross the disabled barrier while visiting the
+    original field note. Confirm terminal, barrier, and collision behavior are
+    unchanged.
+12. Confirm all three notes retain the same visual and interaction dimensions.
 13. Hold each direction against its world boundary. Confirm player X remains
    within `0–1576`, player Y remains within `0–1176`, viewport X remains within
    `0–960`, viewport Y remains within `0–752`, and no outside area is exposed.

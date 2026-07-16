@@ -320,6 +320,28 @@ to normal rendering with player, viewport, terminal, and barrier values
 unchanged. There is no application state, document framework, text scrolling,
 UI system, collection, or save behavior.
 
+## Multiple fixed readable documents
+
+Milestone 016 replaces the single note definition with one local, fixed
+three-entry compile-time table. Each entry contains only a 48×48
+`WorldRectangle` and a pointer to its unique compile-time ASCII text. The notes
+are located at `(980,680)`, `(260,260)`, and `(1320,940)` and all use the proven
+pale RGB color `(0xe0,0xd4,0xa8)`. They remain non-solid and use their own
+rectangle for both clipped rendering and half-open player overlap.
+
+Normal rendering iterates the fixed entries to draw all three notes. The same
+overlap helper identifies the note under the player and displays the existing
+prompt. A newly pressed Cross stores only that entry's text pointer in
+`open_document_text` and sets the existing `document_open` flag. This transient
+selection exists only while the overlay is visible; Circle clears both values.
+There is no per-note read flag, collection, ordering, progression, document-list
+UI, inventory, or persistence.
+
+The reading overlay, frame-timer refresh, frozen gameplay update, Circle
+dismissal, and double-buffered render lifecycle remain single shared code paths.
+Only the selected compile-time text differs. All notes remain available and may
+be opened repeatedly in any order.
+
 ## Scope
 
 The video module exposes only frame begin, filled rectangle, the single test

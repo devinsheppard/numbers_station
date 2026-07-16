@@ -2,6 +2,16 @@
 
 All notable project changes will be appended here. Do not delete previous entries.
 
+## 2026-07-16 - Milestone 016 Multiple Fixed Readable Documents
+
+- Expanded the single field note into three fixed 48×48 world documents.
+- Added unique compile-time field-note text at three separated locations.
+- Reused one proximity, opening, overlay, dismissal, and timing path for every
+  note.
+- Kept every note non-solid, repeatable, and free of read or collection state.
+- Preserved movement, collision, terminal, barrier, viewport, texture, and
+  presentation behavior.
+
 ## 2026-07-16 - Milestone 015 Fixed Readable Document
 
 - Added one fixed, pale, non-solid field note beyond the signal barrier.
