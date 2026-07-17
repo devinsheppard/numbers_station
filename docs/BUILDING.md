@@ -59,11 +59,11 @@ Generated files stay below `out/` and are never used as source inputs.
 
 ## Runtime verification
 
-The Milestone 019 ELF should initially display:
+The Milestone 020 ELF should initially display:
 
 ```text
 Numbers Station
-Milestone 019
+Milestone 020
 ```
 
 After approximately three seconds it should display:
@@ -76,13 +76,13 @@ Main Menu
 Press START
 ```
 
-## PCSX2 ambient-radio verification
+## PCSX2 radio-direction verification
 
 1. Configure a controller or keyboard mapping for PCSX2 controller port 1.
 2. Launch `out/bin/numbers_station.elf` through PCSX2's ELF loader.
 3. Confirm Splash appears immediately and Main Menu replaces it after about
    three seconds without input.
-4. Press START once and confirm Gameplay displays `Ambient Radio`, player
+4. Press START once and confirm Gameplay displays `Radio Direction Finder`, player
    world X/Y, viewport X/Y, the terminal, barrier, three pale notes, existing
    obstacles, and textured player.
 5. Confirm the sprite contains a blue checkerboard, pale border and N-shaped
@@ -137,18 +137,32 @@ Press START
     and confirm the sequence deterministically restarts at its first entry.
 27. Confirm radio proximity and sequence changes do not alter the current
     objective, world state, documents, or extraction behavior.
-28. Hold each direction against its world boundary. Confirm player X remains
+28. On the first in-range frame and while stationary, confirm the additional
+    line reads `SIGNAL STABLE`.
+29. Move measurably toward the radio and confirm it reads
+    `SIGNAL STRENGTHENING` while the existing transmission timing continues.
+30. Move measurably away from the radio without leaving range and confirm it
+    reads `SIGNAL WEAKENING`.
+31. Move approximately tangentially or stop and confirm changes within the fixed
+    tolerance read `SIGNAL STABLE` without affecting movement.
+32. Open a document or completion overlay and confirm direction comparison
+    pauses with radio timing, then resumes safely after dismissal.
+33. Leave and re-enter range. Confirm the first status is stable and the
+    transmission sequence still restarts from its first entry.
+34. Confirm no direction status appears outside radio range and no status
+    changes objectives or world state.
+35. Hold each direction against its world boundary. Confirm player X remains
     within `0–1576`, player Y remains within `0–1176`, viewport X remains within
     `0–960`, viewport Y remains within `0–752`, and no outside area is exposed.
-29. Confirm display/draw indices are always opposite and alternate `0/1` then
-   `1/0` as frames are presented.
-30. Visit all four edges and multiple corners. Confirm corner markers appear,
+36. Confirm display/draw indices are always opposite and alternate `0/1` then
+    `1/0` as frames are presented.
+37. Visit all four edges and multiple corners. Confirm corner markers appear,
     clipped landmarks remain inside the display, the environment fills every
     frame, and player placement remains correct when the viewport is clamped.
-31. Disconnect or disable the controller near the notes, extraction zone, or
+38. Disconnect or disable the controller near the notes, extraction zone, or
     radio and while either overlay is open. Confirm no accidental opening or
     dismissal, drift, crash, or hang.
-32. Confirm Gameplay remains active after repeated reading, extraction, and
+39. Confirm Gameplay remains active after repeated reading, extraction, and
     radio reception, rendering continues after the textured player, and START
     does not exit it.
 

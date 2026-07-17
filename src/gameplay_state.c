@@ -14,7 +14,10 @@ enum {
     VIEWPORT_WIDTH = 640,
     VIEWPORT_HEIGHT = 448,
     ALL_DOCUMENTS_READ = 0x07,
-    RADIO_ACTIVATION_RADIUS = 180
+    RADIO_ACTIVATION_RADIUS = 180,
+    RADIO_SIGNAL_STABLE = 0,
+    RADIO_SIGNAL_STRENGTHENING = 1,
+    RADIO_SIGNAL_WEAKENING = 2
 };
 
 typedef struct WorldRectangle {
@@ -60,6 +63,9 @@ static int completion_overlay_open;
 static int player_in_extraction_zone;
 static float radio_elapsed_seconds;
 static unsigned int radio_transmission_index;
+static float previous_radio_distance_squared;
+static int previous_radio_distance_valid;
+static unsigned int radio_signal_status;
 
 static const char objective_activate_terminal[] =
     "Activate the relay terminal.";
@@ -112,6 +118,14 @@ static const char *const radio_transmissions[] = {
     "28144 00973 11852",
     "55017 36490 70221"
 };
+
+static const char *const radio_signal_statuses[] = {
+    "SIGNAL STABLE",
+    "SIGNAL STRENGTHENING",
+    "SIGNAL WEAKENING"
+};
+
+static const float radio_distance_squared_tolerance = 16.0f;
 
 static const char completion_text[] =
     "MISSION COMPLETE\n"
@@ -266,7 +280,7 @@ static int player_overlaps_extraction_zone(void)
                           extraction_zone.y + extraction_zone.height);
 }
 
-static int player_is_near_radio(void)
+static float player_radio_distance_squared(void)
 {
     float player_center_x = player.x + player.width * 0.5f;
     float player_center_y = player.y + player.height * 0.5f;
@@ -275,17 +289,43 @@ static int player_is_near_radio(void)
     float offset_x = player_center_x - radio_center_x;
     float offset_y = player_center_y - radio_center_y;
 
-    return offset_x * offset_x + offset_y * offset_y <=
+    return offset_x * offset_x + offset_y * offset_y;
+}
+
+static int player_is_near_radio(void)
+{
+    return player_radio_distance_squared() <=
            RADIO_ACTIVATION_RADIUS * RADIO_ACTIVATION_RADIUS;
 }
 
 static void update_radio(void)
 {
-    if (!player_is_near_radio()) {
+    float current_distance_squared = player_radio_distance_squared();
+
+    if (current_distance_squared >
+        RADIO_ACTIVATION_RADIUS * RADIO_ACTIVATION_RADIUS) {
         radio_elapsed_seconds = 0.0f;
         radio_transmission_index = 0;
+        previous_radio_distance_squared = 0.0f;
+        previous_radio_distance_valid = 0;
+        radio_signal_status = RADIO_SIGNAL_STABLE;
         return;
     }
+
+    if (!previous_radio_distance_valid) {
+        radio_signal_status = RADIO_SIGNAL_STABLE;
+        previous_radio_distance_valid = 1;
+    } else if (current_distance_squared + radio_distance_squared_tolerance <
+               previous_radio_distance_squared) {
+        radio_signal_status = RADIO_SIGNAL_STRENGTHENING;
+    } else if (current_distance_squared >
+               previous_radio_distance_squared +
+                   radio_distance_squared_tolerance) {
+        radio_signal_status = RADIO_SIGNAL_WEAKENING;
+    } else {
+        radio_signal_status = RADIO_SIGNAL_STABLE;
+    }
+    previous_radio_distance_squared = current_distance_squared;
 
     radio_elapsed_seconds += frame_timer.delta_seconds;
     if (radio_elapsed_seconds >= 3.0f) {
@@ -412,6 +452,9 @@ void gameplay_state_initialize(void)
     player_in_extraction_zone = 0;
     radio_elapsed_seconds = 0.0f;
     radio_transmission_index = 0;
+    previous_radio_distance_squared = 0.0f;
+    previous_radio_distance_valid = 0;
+    radio_signal_status = RADIO_SIGNAL_STABLE;
     update_viewport();
 }
 
@@ -535,7 +578,7 @@ void gameplay_state_render(void)
     }
 
     video_draw_text(2, 1,
-                    "Numbers Station\nMilestone 019\nAmbient Radio");
+                    "Numbers Station\nMilestone 020\nRadio Direction Finder");
     video_draw_text(2, 5, "Player world: %d, %d", (int)player.x,
                     (int)player.y);
     video_draw_text(2, 6, "Viewport: %d, %d", (int)viewport_x,
@@ -563,6 +606,8 @@ void gameplay_state_render(void)
     if (player_is_near_radio()) {
         video_draw_text(28, 1, "RADIO: %s",
                         radio_transmissions[radio_transmission_index]);
+        video_draw_text(28, 2, "%s",
+                        radio_signal_statuses[radio_signal_status]);
     }
     player_render(&player, viewport_x, viewport_y);
     video_present_frame();
@@ -587,4 +632,7 @@ void gameplay_state_shutdown(void)
     player_in_extraction_zone = 0;
     radio_elapsed_seconds = 0.0f;
     radio_transmission_index = 0;
+    previous_radio_distance_squared = 0.0f;
+    previous_radio_distance_valid = 0;
+    radio_signal_status = RADIO_SIGNAL_STABLE;
 }

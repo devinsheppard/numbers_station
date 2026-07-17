@@ -406,6 +406,26 @@ movement, collision, viewport, rendering, texture state, or presentation. There
 is no audio playback, radio inventory, event, dialogue, timing subsystem, or
 generalized message architecture.
 
+## Radio direction finder
+
+Milestone 020 retains the fixed radio marker, 180-pixel activation radius, five
+transmissions, three-second sequence timing, and deterministic reset behavior.
+It adds only the previous squared center-distance sample, a validity flag, and
+one local status index.
+
+During normal in-range Gameplay, the current squared distance is compared with
+the previous frame using a fixed tolerance of 16 squared-pixel units. A decrease
+greater than the tolerance selects `SIGNAL STRENGTHENING`; an increase greater
+than the tolerance selects `SIGNAL WEAKENING`; otherwise the display reads
+`SIGNAL STABLE`. The first in-range sample is stable. Leaving range clears the
+sample and resets the status, so re-entry is deterministic.
+
+Squared distance avoids a square root and new math-library dependency. The
+status is informational only and is drawn beneath the existing transmission.
+Document and completion overlays return before direction updates, preserving
+their established freeze behavior. No compass, minimap, HUD framework, radio or
+navigation subsystem, event, objective change, or persistent state is added.
+
 ## Scope
 
 The video module exposes only frame begin, filled rectangle, the single test

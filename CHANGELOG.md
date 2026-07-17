@@ -2,6 +2,16 @@
 
 All notable project changes will be appended here. Do not delete previous entries.
 
+## 2026-07-16 - Milestone 020 Radio Direction Finder Prototype
+
+- Added deterministic strengthening, weakening, and stable signal states while
+  inside the existing radio radius.
+- Compared consecutive squared center-distance samples using a fixed tolerance
+  of 16 squared-pixel units.
+- Reset the previous sample and signal state when leaving radio range.
+- Preserved the existing marker, activation radius, transmission sequence,
+  timing, overlay pauses, and all Gameplay world state.
+
 ## 2026-07-16 - Milestone 019 Ambient Radio Prototype
 
 - Added one fixed non-solid radio marker at `(1510,1120)`.
