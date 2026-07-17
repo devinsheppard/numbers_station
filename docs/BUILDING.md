@@ -59,11 +59,11 @@ Generated files stay below `out/` and are never used as source inputs.
 
 ## Runtime verification
 
-The Milestone 021 ELF should initially display:
+The Milestone 022 ELF should initially display:
 
 ```text
 Numbers Station
-Milestone 021
+Milestone 022
 ```
 
 After approximately three seconds it should display:
@@ -76,13 +76,13 @@ Main Menu
 Press START
 ```
 
-## PCSX2 radio-inspection verification
+## PCSX2 transmission-source inspection verification
 
 1. Configure a controller or keyboard mapping for PCSX2 controller port 1.
 2. Launch `out/bin/numbers_station.elf` through PCSX2's ELF loader.
 3. Confirm Splash appears immediately and Main Menu replaces it after about
    three seconds without input.
-4. Press START once and confirm Gameplay displays `Radio Inspection`, player
+4. Press START once and confirm Gameplay displays `Transmission Source Inspection`, player
    world X/Y, viewport X/Y, the terminal, barrier, three pale notes, existing
    obstacles, and textured player.
 5. Confirm the sprite contains a blue checkerboard, pale border and N-shaped
@@ -109,77 +109,83 @@ Press START
 14. Reopen every note and confirm the final objective remains unchanged and no
     note is removed, marked, collected, or made unavailable.
 15. Confirm all three notes retain the same visual and interaction dimensions.
-16. Find the cyan extraction marker at `(1360,1020)` and confirm it is
+16. Find the cyan transmission-source marker at `(1360,1020)` and confirm it is
     non-solid, viewport-relative, and visible within its fixed 80×80 bounds.
-17. Enter the extraction zone before reading all three notes. Confirm it has no
+17. Enter the source area before reading all three notes. Confirm it has no
     effect and Gameplay continues normally.
-18. Complete the existing objective chain, leave the zone if necessary, and
-    enter it after the final objective appears. Confirm a dark overlay displays
+18. Read all three notes without inspecting the radio and confirm the objective
+    becomes `Inspect the stationary receiver.` Enter the source area and confirm
+    no prompt or completion is available.
+19. Inspect the stationary radio and confirm its overlay reads `RADIO RECEIVER`.
+    Confirm the objective becomes `Investigate the transmission source.` Enter
+    the cyan source area, confirm `Press CROSS to inspect`, and verify that only
+    newly pressed Cross opens a dark overlay displaying
     `MISSION COMPLETE`, `Transmission source located.`, `End of prototype.`,
     and `Press CIRCLE to return.`
-19. Hold movement and Cross while the completion overlay is open. Confirm
+20. Hold movement and Cross while the completion overlay is open. Confirm
     player, viewport, collision, terminal, barrier, documents, and objective
     progress remain frozen and the overlay stays open.
-20. Newly press Circle and confirm Gameplay resumes at the exact player and
+21. Newly press Circle and confirm Gameplay resumes at the exact player and
     viewport position without a movement jump or immediate overlay reopening.
-21. Leave and re-enter the extraction zone. Confirm the completion overlay may
-    be opened and dismissed again without storing completion state.
-22. Find the magenta radio marker at `(1510,1120)` and confirm it is
+22. Confirm entering the source area alone never opens the overlay and holding
+    Cross before entry does not inspect it; release and newly press Cross to
+    open it again without storing persistent completion state.
+23. Find the magenta radio marker at `(1510,1120)` and confirm it is
     viewport-relative, clipped, and non-solid.
-23. Remain outside its 180-pixel center-distance radius and confirm no radio
+24. Remain outside its 180-pixel center-distance radius and confirm no radio
     transmission is displayed.
-24. Enter the radius and confirm `RADIO: 41729 08314 55190` appears near the top
+25. Enter the radius and confirm `RADIO: 41729 08314 55190` appears near the top
     while movement and all Gameplay behavior continue normally.
-25. Remain nearby and confirm the display advances every three seconds through
+26. Remain nearby and confirm the display advances every three seconds through
     `66302 19447 82016`, `09531 77208 43665`, `28144 00973 11852`, and
     `55017 36490 70221`, then loops to the first entry.
-26. Leave range and confirm the radio display disappears immediately. Re-enter
+27. Leave range and confirm the radio display disappears immediately. Re-enter
     and confirm the sequence deterministically restarts at its first entry.
-27. Confirm radio proximity and sequence changes do not alter the current
-    objective, world state, documents, or extraction behavior.
-28. On the first in-range frame and while stationary, confirm the additional
+28. Confirm radio proximity and sequence changes do not alter documents or
+    source state; only valid radio inspection records receiver confirmation.
+29. On the first in-range frame and while stationary, confirm the additional
     line reads `SIGNAL STABLE`.
-29. Move measurably toward the radio and confirm it reads
+30. Move measurably toward the radio and confirm it reads
     `SIGNAL STRENGTHENING` while the existing transmission timing continues.
-30. Move measurably away from the radio without leaving range and confirm it
+31. Move measurably away from the radio without leaving range and confirm it
     reads `SIGNAL WEAKENING`.
-31. Move approximately tangentially or stop and confirm changes within the fixed
+32. Move approximately tangentially or stop and confirm changes within the fixed
     tolerance read `SIGNAL STABLE` without affecting movement.
-32. Open a document or completion overlay and confirm direction comparison
+33. Open a document or completion overlay and confirm direction comparison
     pauses with radio timing, then resumes safely after dismissal.
-33. Leave and re-enter range. Confirm the first status is stable and the
+34. Leave and re-enter range. Confirm the first status is stable and the
     transmission sequence still restarts from its first entry.
-34. Confirm no direction status appears outside radio range and no status
+35. Confirm no direction status appears outside radio range and no status
     changes objectives or world state.
-35. Confirm no inspection prompt appears outside the radio marker's half-open
+36. Confirm no inspection prompt appears outside the radio marker's half-open
     bounds and entering those bounds without pressing Cross does nothing.
-36. Hold Cross before entering the radio bounds and confirm the overlay does not
+37. Hold Cross before entering the radio bounds and confirm the overlay does not
     open. Release Cross and confirm `Press CROSS to inspect` while overlapping.
-37. Newly press Cross and confirm a dark full-screen overlay displays
-    `TRANSMISSION SOURCE`, `The receiver is disconnected.`,
+38. Newly press Cross and confirm a dark full-screen overlay displays
+    `RADIO RECEIVER`, `The receiver is disconnected.`,
     `The numbers continue.`, and `Press CIRCLE to close.`
-38. Hold movement, Cross, and unrelated buttons. Confirm the overlay remains
+39. Hold movement, Cross, and unrelated buttons. Confirm the overlay remains
     open and player, viewport, interactions, objectives, and world state freeze.
-39. Confirm radio transmission timing and direction comparison remain paused
+40. Confirm radio transmission timing and direction comparison remain paused
     while inspection is open.
-40. Newly press Circle and confirm normal Gameplay resumes at the exact player
+41. Newly press Circle and confirm normal Gameplay resumes at the exact player
     and viewport position without a movement jump.
-41. Confirm the previous transmission index, timing, and direction state resume
+42. Confirm the previous transmission index, timing, and direction state resume
     safely, then dismiss and reopen the inspection repeatedly.
-42. Confirm inspection never changes objective, extraction, terminal, barrier,
-    document, radio, or world state.
-43. Hold each direction against its world boundary. Confirm player X remains
+43. Confirm repeat inspection does not toggle confirmation, disturb radio state,
+    or change terminal, barrier, document, player, or viewport state.
+44. Hold each direction against its world boundary. Confirm player X remains
     within `0–1576`, player Y remains within `0–1176`, viewport X remains within
     `0–960`, viewport Y remains within `0–752`, and no outside area is exposed.
-44. Confirm display/draw indices are always opposite and alternate `0/1` then
+45. Confirm display/draw indices are always opposite and alternate `0/1` then
     `1/0` as frames are presented.
-45. Visit all four edges and multiple corners. Confirm corner markers appear,
+46. Visit all four edges and multiple corners. Confirm corner markers appear,
     clipped landmarks remain inside the display, the environment fills every
     frame, and player placement remains correct when the viewport is clamped.
-46. Disconnect or disable the controller near the notes, extraction zone, or
+47. Disconnect or disable the controller near the notes, source area, or
     radio and while either overlay is open. Confirm no accidental opening or
     dismissal, drift, crash, or hang.
-47. Confirm Gameplay remains active after repeated reading, extraction, radio
+48. Confirm Gameplay remains active after repeated reading, source inspection, radio
     reception, and inspection; rendering continues after the textured player,
     and START does not exit it.
 

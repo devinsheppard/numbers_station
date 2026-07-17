@@ -60,13 +60,14 @@ static int document_open;
 static const char *open_document_text;
 static unsigned int documents_read;
 static int completion_overlay_open;
-static int player_in_extraction_zone;
+static int player_in_transmission_source;
 static float radio_elapsed_seconds;
 static unsigned int radio_transmission_index;
 static float previous_radio_distance_squared;
 static int previous_radio_distance_valid;
 static unsigned int radio_signal_status;
 static int radio_inspection_open;
+static int radio_source_confirmed;
 
 static const char objective_activate_terminal[] =
     "Activate the relay terminal.";
@@ -74,6 +75,8 @@ static const char objective_search_beyond_barrier[] =
     "Search beyond the barrier.";
 static const char objective_investigate_source[] =
     "Investigate the transmission source.";
+static const char objective_inspect_receiver[] =
+    "Inspect the stationary receiver.";
 
 static const WorldRectangle landmarks[] = {
     {520.0f, 380.0f, 560.0f, 440.0f, 0x18, 0x38, 0x28},
@@ -104,7 +107,7 @@ static const SignalBarrier signal_barrier = {
     0x38, 0x48, 0x50
 };
 
-static const WorldRectangle extraction_zone = {
+static const WorldRectangle transmission_source = {
     1360.0f, 1020.0f, 80.0f, 80.0f, 0x40, 0xd8, 0xd0
 };
 
@@ -129,7 +132,7 @@ static const char *const radio_signal_statuses[] = {
 static const float radio_distance_squared_tolerance = 16.0f;
 
 static const char radio_inspection_text[] =
-    "TRANSMISSION SOURCE\n"
+    "RADIO RECEIVER\n"
     "\n"
     "The receiver is disconnected.\n"
     "\n"
@@ -205,13 +208,16 @@ static const ReadableDocument readable_documents[] = {
 
 static const char *current_objective(void)
 {
-    if (documents_read == ALL_DOCUMENTS_READ) {
-        return objective_investigate_source;
+    if (!signal_terminal_activated) {
+        return objective_activate_terminal;
     }
-    if (signal_terminal_activated) {
+    if (documents_read != ALL_DOCUMENTS_READ) {
         return objective_search_beyond_barrier;
     }
-    return objective_activate_terminal;
+    if (!radio_source_confirmed) {
+        return objective_inspect_receiver;
+    }
+    return objective_investigate_source;
 }
 
 static float clamp(float value, float minimum, float maximum)
@@ -281,13 +287,14 @@ static int player_overlaps_document(const ReadableDocument *document)
                           rectangle->y + rectangle->height);
 }
 
-static int player_overlaps_extraction_zone(void)
+static int player_overlaps_transmission_source(void)
 {
-    return ranges_overlap(player.x, player.x + player.width, extraction_zone.x,
-                          extraction_zone.x + extraction_zone.width) &&
+    return ranges_overlap(player.x, player.x + player.width,
+                          transmission_source.x,
+                          transmission_source.x + transmission_source.width) &&
            ranges_overlap(player.y, player.y + player.height,
-                          extraction_zone.y,
-                          extraction_zone.y + extraction_zone.height);
+                          transmission_source.y,
+                          transmission_source.y + transmission_source.height);
 }
 
 static float player_radio_distance_squared(void)
@@ -467,13 +474,14 @@ void gameplay_state_initialize(void)
     open_document_text = NULL;
     documents_read = 0;
     completion_overlay_open = 0;
-    player_in_extraction_zone = 0;
+    player_in_transmission_source = 0;
     radio_elapsed_seconds = 0.0f;
     radio_transmission_index = 0;
     previous_radio_distance_squared = 0.0f;
     previous_radio_distance_valid = 0;
     radio_signal_status = RADIO_SIGNAL_STABLE;
     radio_inspection_open = 0;
+    radio_source_confirmed = 0;
     update_viewport();
 }
 
@@ -530,20 +538,18 @@ void gameplay_state_update(void)
     }
     if (player_overlaps_radio_source() &&
         (input_get_state()->pressed_buttons & PAD_CROSS) != 0) {
+        radio_source_confirmed = 1;
         radio_inspection_open = 1;
         update_viewport();
         return;
     }
     update_viewport();
     update_radio();
-    {
-        int overlaps_extraction = player_overlaps_extraction_zone();
-
-        if (documents_read == ALL_DOCUMENTS_READ && overlaps_extraction &&
-            !player_in_extraction_zone) {
-            completion_overlay_open = 1;
-        }
-        player_in_extraction_zone = overlaps_extraction;
+    player_in_transmission_source = player_overlaps_transmission_source();
+    if (documents_read == ALL_DOCUMENTS_READ && radio_source_confirmed &&
+        player_in_transmission_source &&
+        (input_get_state()->pressed_buttons & PAD_CROSS) != 0) {
+        completion_overlay_open = 1;
     }
 }
 
@@ -608,7 +614,7 @@ void gameplay_state_render(void)
         draw_world_rectangle(&readable_documents[index].rectangle);
     }
 
-    draw_world_rectangle(&extraction_zone);
+    draw_world_rectangle(&transmission_source);
     draw_world_rectangle(&radio_source);
 
     for (index = 0;
@@ -618,7 +624,7 @@ void gameplay_state_render(void)
     }
 
     video_draw_text(2, 1,
-                    "Numbers Station\nMilestone 021\nRadio Inspection");
+                    "Numbers Station\nMilestone 022\nTransmission Source Inspection");
     video_draw_text(2, 5, "Player world: %d, %d", (int)player.x,
                     (int)player.y);
     video_draw_text(2, 6, "Viewport: %d, %d", (int)viewport_x,
@@ -651,6 +657,9 @@ void gameplay_state_render(void)
     }
     if (player_overlaps_radio_source()) {
         video_draw_text(2, 13, "Press CROSS to inspect");
+    } else if (documents_read == ALL_DOCUMENTS_READ &&
+               radio_source_confirmed && player_in_transmission_source) {
+        video_draw_text(2, 13, "Press CROSS to inspect");
     }
     player_render(&player, viewport_x, viewport_y);
     video_present_frame();
@@ -672,11 +681,12 @@ void gameplay_state_shutdown(void)
     player_blocked_y = 0;
     documents_read = 0;
     completion_overlay_open = 0;
-    player_in_extraction_zone = 0;
+    player_in_transmission_source = 0;
     radio_elapsed_seconds = 0.0f;
     radio_transmission_index = 0;
     previous_radio_distance_squared = 0.0f;
     previous_radio_distance_valid = 0;
     radio_signal_status = RADIO_SIGNAL_STABLE;
     radio_inspection_open = 0;
+    radio_source_confirmed = 0;
 }

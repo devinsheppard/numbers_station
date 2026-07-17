@@ -362,19 +362,20 @@ journal, event, quest, or generalized objective system. Movement, collision,
 viewport, terminal, barrier, document overlay, frame timing, rendering, texture,
 and double-buffer behavior remain unchanged.
 
-## Fixed world exit
+## Fixed transmission-source completion trigger
 
-Milestone 018 adds one non-solid `80×80` extraction rectangle at world position
-`(1360,1020)`. The fixed cyan marker is rendered through the existing clipped
-world-rectangle path and scrolls with the unchanged viewport. It does not enter
-collision resolution and is outside the existing solid geometry.
+Milestone 018 added one non-solid `80×80` cyan rectangle at world position
+`(1360,1020)`. It was originally named as an extraction rectangle; the current
+Gameplay meaning is the separate transmission-source location. The marker is
+rendered through the existing clipped world-rectangle path, scrolls with the
+unchanged viewport, and does not enter collision resolution.
 
-The existing three-bit document mask is also the direct completion condition.
-Before all three bits are set, overlap with the extraction rectangle has no
-effect. After all documents have been opened, crossing from outside to inside
-sets one transient `completion_overlay_open` flag. A second transient inside
-flag prevents the overlay from reopening immediately after dismissal; leaving
-and re-entering the zone can open it again.
+In current Gameplay, overlap alone never completes the sequence. Once all three
+document bits are set and the stationary radio has been inspected, overlap
+displays `Press CROSS to inspect`. Newly pressed Cross inside the same cyan
+bounds sets the existing transient `completion_overlay_open` flag. Early
+physical discovery, held Cross on entry, and Cross before eligibility have no
+effect.
 
 While open, the completion overlay follows the proven document-overlay frame
 path: frame timing continues to refresh, Gameplay update returns before movement
@@ -386,8 +387,8 @@ mission system, ending system, transition, checkpoint, or save behavior.
 
 ## Ambient radio
 
-Milestone 019 adds one non-solid `32×32` radio marker at world position
-`(1510,1120)`, beyond the extraction zone. The fixed magenta marker uses the
+Milestone 019 adds one non-solid `32×32` stationary radio marker at world
+position `(1510,1120)`, near the transmission-source area. The fixed magenta marker uses the
 existing clipped world-rectangle renderer and unchanged viewport. Player
 proximity compares squared center-to-center distance against a fixed 180-pixel
 radius, avoiding a square root and introducing no collision behavior.
@@ -401,7 +402,8 @@ the same transmission and no wall-clock or random state is involved.
 
 Document and completion overlays retain their exclusive text rendering and
 freeze behavior; radio timing therefore pauses while either overlay is active.
-The radio does not alter objectives, documents, extraction, terminal, barrier,
+Radio proximity does not alter objectives, documents, source completion,
+terminal, barrier,
 movement, collision, viewport, rendering, texture state, or presentation. There
 is no audio playback, radio inventory, event, dialogue, timing subsystem, or
 generalized message architecture.
@@ -426,16 +428,16 @@ Document and completion overlays return before direction updates, preserving
 their established freeze behavior. No compass, minimap, HUD framework, radio or
 navigation subsystem, event, objective change, or persistent state is added.
 
-## Fixed radio source inspection
+## Fixed stationary-radio inspection
 
-Milestone 021 reuses the existing `32×32` radio rectangle as the sole visual and
+Milestone 021 reuses the existing `32×32` stationary-radio rectangle as the sole visual and
 half-open interaction boundary. While the player overlaps that rectangle during
 normal Gameplay, the existing debug text path displays `Press CROSS to inspect`.
 A newly pressed Cross sets one transient `radio_inspection_open` flag; held
 Cross state does not open it.
 
 The inspection update path continues to call `frame_timer_update`, then returns
-before movement, collision, interactions, extraction, radio timing, or radio
+before movement, collision, interactions, source inspection, radio timing, or radio
 direction comparison. This preserves all Gameplay and radio values and prevents
 elapsed time from accumulating. Newly pressed Circle clears the flag; Cross and
 all other Gameplay controls have no effect while the overlay is open.
@@ -447,6 +449,29 @@ returns to the exact player and viewport position with the prior transmission
 index, elapsed radio time, distance sample, and signal status unchanged. The
 inspection is repeatable and stores no inspected or persistent state. No radio,
 interaction, overlay, UI, event, or navigation framework is introduced.
+
+## Radio-confirmed transmission-source inspection
+
+Milestone 022 adds one Gameplay-local `radio_source_confirmed` flag. A valid
+newly pressed Cross that opens the existing radio inspection sets the flag. It
+is monotonic for the current Gameplay entry: repeat inspections leave it set,
+and Gameplay initialization and shutdown clear it with the existing transient
+document and overlay state.
+
+Objective selection extends the existing direct conditionals. The inactive
+terminal remains highest priority, followed by the incomplete document mask.
+Early radio inspection cannot replace either objective. Once the terminal is
+active and all three document bits are set, an unconfirmed radio selects
+`Inspect the stationary receiver.`; a confirmed radio selects `Investigate the
+transmission source.` This makes document reading and radio inspection
+order-independent without adding an objective state machine.
+
+The cyan rectangle is now named `transmission_source`. The single source
+inspection condition requires the complete document mask, radio confirmation,
+half-open player overlap, and newly pressed Cross. Merely entering it has no
+effect, and no return journey is required. The existing completion overlay opens
+only from that explicit source inspection. No quest, event, interaction,
+mission, persistence, or generalized progression system is introduced.
 
 ## Scope
 

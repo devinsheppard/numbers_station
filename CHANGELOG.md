@@ -2,6 +2,16 @@
 
 All notable project changes will be appended here. Do not delete previous entries.
 
+## 2026-07-17 - Milestone 022 Transmission Source Inspection
+
+- Distinguished the stationary radio receiver from the cyan transmission-source
+  area and corrected their identifiers and overlay language.
+- Added one session-local radio-confirmation flag set by valid receiver
+  inspection, while preserving earlier objective priority.
+- Replaced automatic cyan-area completion with an eligible newly pressed Cross
+  source inspection that opens the existing completion overlay.
+- Added no return journey, persistence, or generalized progression framework.
+
 ## 2026-07-17 - Milestone 021 Fixed Radio Source Inspection
 
 - Added a half-open overlap prompt using the existing fixed radio rectangle.
