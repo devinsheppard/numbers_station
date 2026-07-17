@@ -13,7 +13,8 @@ enum {
     WORLD_HEIGHT = 1200,
     VIEWPORT_WIDTH = 640,
     VIEWPORT_HEIGHT = 448,
-    ALL_DOCUMENTS_READ = 0x07
+    ALL_DOCUMENTS_READ = 0x07,
+    RADIO_ACTIVATION_RADIUS = 180
 };
 
 typedef struct WorldRectangle {
@@ -57,6 +58,8 @@ static const char *open_document_text;
 static unsigned int documents_read;
 static int completion_overlay_open;
 static int player_in_extraction_zone;
+static float radio_elapsed_seconds;
+static unsigned int radio_transmission_index;
 
 static const char objective_activate_terminal[] =
     "Activate the relay terminal.";
@@ -96,6 +99,18 @@ static const SignalBarrier signal_barrier = {
 
 static const WorldRectangle extraction_zone = {
     1360.0f, 1020.0f, 80.0f, 80.0f, 0x40, 0xd8, 0xd0
+};
+
+static const WorldRectangle radio_source = {
+    1510.0f, 1120.0f, 32.0f, 32.0f, 0xd8, 0x48, 0xd0
+};
+
+static const char *const radio_transmissions[] = {
+    "41729 08314 55190",
+    "66302 19447 82016",
+    "09531 77208 43665",
+    "28144 00973 11852",
+    "55017 36490 70221"
 };
 
 static const char completion_text[] =
@@ -251,6 +266,38 @@ static int player_overlaps_extraction_zone(void)
                           extraction_zone.y + extraction_zone.height);
 }
 
+static int player_is_near_radio(void)
+{
+    float player_center_x = player.x + player.width * 0.5f;
+    float player_center_y = player.y + player.height * 0.5f;
+    float radio_center_x = radio_source.x + radio_source.width * 0.5f;
+    float radio_center_y = radio_source.y + radio_source.height * 0.5f;
+    float offset_x = player_center_x - radio_center_x;
+    float offset_y = player_center_y - radio_center_y;
+
+    return offset_x * offset_x + offset_y * offset_y <=
+           RADIO_ACTIVATION_RADIUS * RADIO_ACTIVATION_RADIUS;
+}
+
+static void update_radio(void)
+{
+    if (!player_is_near_radio()) {
+        radio_elapsed_seconds = 0.0f;
+        radio_transmission_index = 0;
+        return;
+    }
+
+    radio_elapsed_seconds += frame_timer.delta_seconds;
+    if (radio_elapsed_seconds >= 3.0f) {
+        radio_elapsed_seconds -= 3.0f;
+        ++radio_transmission_index;
+        if (radio_transmission_index ==
+            sizeof(radio_transmissions) / sizeof(radio_transmissions[0])) {
+            radio_transmission_index = 0;
+        }
+    }
+}
+
 static void consider_horizontal_collision(const WorldRectangle *obstacle,
                                           float previous_x, float previous_y,
                                           float proposed_x, float *resolved_x)
@@ -363,6 +410,8 @@ void gameplay_state_initialize(void)
     documents_read = 0;
     completion_overlay_open = 0;
     player_in_extraction_zone = 0;
+    radio_elapsed_seconds = 0.0f;
+    radio_transmission_index = 0;
     update_viewport();
 }
 
@@ -412,6 +461,7 @@ void gameplay_state_update(void)
         }
     }
     update_viewport();
+    update_radio();
     {
         int overlaps_extraction = player_overlaps_extraction_zone();
 
@@ -476,6 +526,7 @@ void gameplay_state_render(void)
     }
 
     draw_world_rectangle(&extraction_zone);
+    draw_world_rectangle(&radio_source);
 
     for (index = 0;
          index < sizeof(solid_obstacles) / sizeof(solid_obstacles[0]);
@@ -484,7 +535,7 @@ void gameplay_state_render(void)
     }
 
     video_draw_text(2, 1,
-                    "Numbers Station\nMilestone 018\nWorld Exit");
+                    "Numbers Station\nMilestone 019\nAmbient Radio");
     video_draw_text(2, 5, "Player world: %d, %d", (int)player.x,
                     (int)player.y);
     video_draw_text(2, 6, "Viewport: %d, %d", (int)viewport_x,
@@ -509,6 +560,10 @@ void gameplay_state_render(void)
         }
     }
     video_draw_text(2, 14, "Objective: %s", current_objective());
+    if (player_is_near_radio()) {
+        video_draw_text(28, 1, "RADIO: %s",
+                        radio_transmissions[radio_transmission_index]);
+    }
     player_render(&player, viewport_x, viewport_y);
     video_present_frame();
 }
@@ -530,4 +585,6 @@ void gameplay_state_shutdown(void)
     documents_read = 0;
     completion_overlay_open = 0;
     player_in_extraction_zone = 0;
+    radio_elapsed_seconds = 0.0f;
+    radio_transmission_index = 0;
 }

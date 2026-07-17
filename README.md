@@ -4,9 +4,9 @@ Numbers Station is a PlayStation 2 homebrew project targeting original PS2
 hardware and PCSX2. Development is native on a Raspberry Pi 4 running Ubuntu
 26.04 ARM64. Docker, Windows, WSL, and Tyra are not part of the build workflow.
 
-Milestone 018 adds one fixed world exit that becomes usable after all three
-notes have been read. Entering it presents a temporary completion overlay and
-then returns to the unchanged Gameplay world when Circle is pressed.
+Milestone 019 adds one fixed ambient radio source beyond the extraction zone.
+Approaching it displays a deterministic looping sequence of compile-time number
+groups while Gameplay continues normally.
 
 ## Requirements
 
@@ -73,7 +73,7 @@ See `docs/BUILDING.md` for verification and reproducibility details.
 - `src/main_menu_state.*` — menu display and START response
 - `src/gameplay_state.*` — Gameplay lifecycle, procedural scene, viewport,
   fixed collision, terminal/barrier interaction, three world documents, and
-  a fixed objective and extraction sequence
+  fixed objective, extraction, and ambient-radio sequences
 - `src/player.*` — combined digital/analog movement, world clamping, and sprite
 - `src/frame_timer.*` — elapsed gameplay frame time with stall clamping
 - `docs/` — current engineering documentation and archived milestone evidence

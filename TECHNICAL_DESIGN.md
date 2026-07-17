@@ -384,6 +384,28 @@ viewport, terminal, barrier, documents, objective progress, collision, texture,
 and presentation state remain unchanged. There is no completion persistence,
 mission system, ending system, transition, checkpoint, or save behavior.
 
+## Ambient radio
+
+Milestone 019 adds one non-solid `32×32` radio marker at world position
+`(1510,1120)`, beyond the extraction zone. The fixed magenta marker uses the
+existing clipped world-rectangle renderer and unchanged viewport. Player
+proximity compares squared center-to-center distance against a fixed 180-pixel
+radius, avoiding a square root and introducing no collision behavior.
+
+Five compile-time number-group strings form the complete deterministic sequence.
+While the player is within range, one string is shown near the top of normal
+Gameplay and `frame_timer.delta_seconds` accumulates locally. Every three
+accumulated seconds the index advances, wrapping after the fifth entry. Leaving
+range clears elapsed time and restores index zero, so every approach starts with
+the same transmission and no wall-clock or random state is involved.
+
+Document and completion overlays retain their exclusive text rendering and
+freeze behavior; radio timing therefore pauses while either overlay is active.
+The radio does not alter objectives, documents, extraction, terminal, barrier,
+movement, collision, viewport, rendering, texture state, or presentation. There
+is no audio playback, radio inventory, event, dialogue, timing subsystem, or
+generalized message architecture.
+
 ## Scope
 
 The video module exposes only frame begin, filled rectangle, the single test

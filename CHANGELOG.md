@@ -2,6 +2,16 @@
 
 All notable project changes will be appended here. Do not delete previous entries.
 
+## 2026-07-16 - Milestone 019 Ambient Radio Prototype
+
+- Added one fixed non-solid radio marker at `(1510,1120)`.
+- Added a fixed 180-pixel center-distance activation radius.
+- Added five compile-time number-group transmissions advancing every three
+  nearby Gameplay seconds and looping deterministically.
+- Reset the sequence predictably when the player leaves range.
+- Preserved all objective, extraction, overlay, movement, collision, rendering,
+  texture, and presentation behavior.
+
 ## 2026-07-16 - Milestone 018 World Exit Prototype
 
 - Added one fixed non-solid extraction zone at `(1360,1020)`.

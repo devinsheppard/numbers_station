@@ -59,11 +59,11 @@ Generated files stay below `out/` and are never used as source inputs.
 
 ## Runtime verification
 
-The Milestone 018 ELF should initially display:
+The Milestone 019 ELF should initially display:
 
 ```text
 Numbers Station
-Milestone 018
+Milestone 019
 ```
 
 After approximately three seconds it should display:
@@ -76,13 +76,13 @@ Main Menu
 Press START
 ```
 
-## PCSX2 world-exit verification
+## PCSX2 ambient-radio verification
 
 1. Configure a controller or keyboard mapping for PCSX2 controller port 1.
 2. Launch `out/bin/numbers_station.elf` through PCSX2's ELF loader.
 3. Confirm Splash appears immediately and Main Menu replaces it after about
    three seconds without input.
-4. Press START once and confirm Gameplay displays `World Exit`, player
+4. Press START once and confirm Gameplay displays `Ambient Radio`, player
    world X/Y, viewport X/Y, the terminal, barrier, three pale notes, existing
    obstacles, and textured player.
 5. Confirm the sprite contains a blue checkerboard, pale border and N-shaped
@@ -124,19 +124,33 @@ Press START
     viewport position without a movement jump or immediate overlay reopening.
 21. Leave and re-enter the extraction zone. Confirm the completion overlay may
     be opened and dismissed again without storing completion state.
-22. Hold each direction against its world boundary. Confirm player X remains
-   within `0–1576`, player Y remains within `0–1176`, viewport X remains within
-   `0–960`, viewport Y remains within `0–752`, and no outside area is exposed.
-23. Confirm display/draw indices are always opposite and alternate `0/1` then
+22. Find the magenta radio marker at `(1510,1120)` and confirm it is
+    viewport-relative, clipped, and non-solid.
+23. Remain outside its 180-pixel center-distance radius and confirm no radio
+    transmission is displayed.
+24. Enter the radius and confirm `RADIO: 41729 08314 55190` appears near the top
+    while movement and all Gameplay behavior continue normally.
+25. Remain nearby and confirm the display advances every three seconds through
+    `66302 19447 82016`, `09531 77208 43665`, `28144 00973 11852`, and
+    `55017 36490 70221`, then loops to the first entry.
+26. Leave range and confirm the radio display disappears immediately. Re-enter
+    and confirm the sequence deterministically restarts at its first entry.
+27. Confirm radio proximity and sequence changes do not alter the current
+    objective, world state, documents, or extraction behavior.
+28. Hold each direction against its world boundary. Confirm player X remains
+    within `0–1576`, player Y remains within `0–1176`, viewport X remains within
+    `0–960`, viewport Y remains within `0–752`, and no outside area is exposed.
+29. Confirm display/draw indices are always opposite and alternate `0/1` then
    `1/0` as frames are presented.
-24. Visit all four edges and multiple corners. Confirm corner markers appear,
+30. Visit all four edges and multiple corners. Confirm corner markers appear,
     clipped landmarks remain inside the display, the environment fills every
     frame, and player placement remains correct when the viewport is clamped.
-25. Disconnect or disable the controller near the notes or extraction zone and
-    while either overlay is open. Confirm no accidental opening or dismissal,
-    drift, crash, or hang.
-26. Confirm Gameplay remains active after repeated reading and extraction,
-    rendering continues after the textured player, and START does not exit it.
+31. Disconnect or disable the controller near the notes, extraction zone, or
+    radio and while either overlay is open. Confirm no accidental opening or
+    dismissal, drift, crash, or hang.
+32. Confirm Gameplay remains active after repeated reading, extraction, and
+    radio reception, rendering continues after the textured player, and START
+    does not exit it.
 
 Static ELF inspection confirms the PS2 MIPS executable format. Runtime claims
 must be recorded separately for PCSX2 and real hardware; a successful build is
