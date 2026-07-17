@@ -59,11 +59,11 @@ Generated files stay below `out/` and are never used as source inputs.
 
 ## Runtime verification
 
-The Milestone 020 ELF should initially display:
+The Milestone 021 ELF should initially display:
 
 ```text
 Numbers Station
-Milestone 020
+Milestone 021
 ```
 
 After approximately three seconds it should display:
@@ -76,13 +76,13 @@ Main Menu
 Press START
 ```
 
-## PCSX2 radio-direction verification
+## PCSX2 radio-inspection verification
 
 1. Configure a controller or keyboard mapping for PCSX2 controller port 1.
 2. Launch `out/bin/numbers_station.elf` through PCSX2's ELF loader.
 3. Confirm Splash appears immediately and Main Menu replaces it after about
    three seconds without input.
-4. Press START once and confirm Gameplay displays `Radio Direction Finder`, player
+4. Press START once and confirm Gameplay displays `Radio Inspection`, player
    world X/Y, viewport X/Y, the terminal, barrier, three pale notes, existing
    obstacles, and textured player.
 5. Confirm the sprite contains a blue checkerboard, pale border and N-shaped
@@ -151,20 +151,37 @@ Press START
     transmission sequence still restarts from its first entry.
 34. Confirm no direction status appears outside radio range and no status
     changes objectives or world state.
-35. Hold each direction against its world boundary. Confirm player X remains
+35. Confirm no inspection prompt appears outside the radio marker's half-open
+    bounds and entering those bounds without pressing Cross does nothing.
+36. Hold Cross before entering the radio bounds and confirm the overlay does not
+    open. Release Cross and confirm `Press CROSS to inspect` while overlapping.
+37. Newly press Cross and confirm a dark full-screen overlay displays
+    `TRANSMISSION SOURCE`, `The receiver is disconnected.`,
+    `The numbers continue.`, and `Press CIRCLE to close.`
+38. Hold movement, Cross, and unrelated buttons. Confirm the overlay remains
+    open and player, viewport, interactions, objectives, and world state freeze.
+39. Confirm radio transmission timing and direction comparison remain paused
+    while inspection is open.
+40. Newly press Circle and confirm normal Gameplay resumes at the exact player
+    and viewport position without a movement jump.
+41. Confirm the previous transmission index, timing, and direction state resume
+    safely, then dismiss and reopen the inspection repeatedly.
+42. Confirm inspection never changes objective, extraction, terminal, barrier,
+    document, radio, or world state.
+43. Hold each direction against its world boundary. Confirm player X remains
     within `0–1576`, player Y remains within `0–1176`, viewport X remains within
     `0–960`, viewport Y remains within `0–752`, and no outside area is exposed.
-36. Confirm display/draw indices are always opposite and alternate `0/1` then
+44. Confirm display/draw indices are always opposite and alternate `0/1` then
     `1/0` as frames are presented.
-37. Visit all four edges and multiple corners. Confirm corner markers appear,
+45. Visit all four edges and multiple corners. Confirm corner markers appear,
     clipped landmarks remain inside the display, the environment fills every
     frame, and player placement remains correct when the viewport is clamped.
-38. Disconnect or disable the controller near the notes, extraction zone, or
+46. Disconnect or disable the controller near the notes, extraction zone, or
     radio and while either overlay is open. Confirm no accidental opening or
     dismissal, drift, crash, or hang.
-39. Confirm Gameplay remains active after repeated reading, extraction, and
-    radio reception, rendering continues after the textured player, and START
-    does not exit it.
+47. Confirm Gameplay remains active after repeated reading, extraction, radio
+    reception, and inspection; rendering continues after the textured player,
+    and START does not exit it.
 
 Static ELF inspection confirms the PS2 MIPS executable format. Runtime claims
 must be recorded separately for PCSX2 and real hardware; a successful build is

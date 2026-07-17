@@ -2,6 +2,16 @@
 
 All notable project changes will be appended here. Do not delete previous entries.
 
+## 2026-07-17 - Milestone 021 Fixed Radio Source Inspection
+
+- Added a half-open overlap prompt using the existing fixed radio rectangle.
+- Added newly pressed Cross inspection and newly pressed Circle dismissal.
+- Added a fixed full-screen compile-time inspection overlay.
+- Paused movement, interactions, extraction, radio timing, and direction updates
+  while continuing frame-timer refreshes.
+- Preserved all player, viewport, objective, world, transmission, and direction
+  state and added no persistent inspection state.
+
 ## 2026-07-16 - Milestone 020 Radio Direction Finder Prototype
 
 - Added deterministic strengthening, weakening, and stable signal states while

@@ -426,6 +426,28 @@ Document and completion overlays return before direction updates, preserving
 their established freeze behavior. No compass, minimap, HUD framework, radio or
 navigation subsystem, event, objective change, or persistent state is added.
 
+## Fixed radio source inspection
+
+Milestone 021 reuses the existing `32×32` radio rectangle as the sole visual and
+half-open interaction boundary. While the player overlaps that rectangle during
+normal Gameplay, the existing debug text path displays `Press CROSS to inspect`.
+A newly pressed Cross sets one transient `radio_inspection_open` flag; held
+Cross state does not open it.
+
+The inspection update path continues to call `frame_timer_update`, then returns
+before movement, collision, interactions, extraction, radio timing, or radio
+direction comparison. This preserves all Gameplay and radio values and prevents
+elapsed time from accumulating. Newly pressed Circle clears the flag; Cross and
+all other Gameplay controls have no effect while the overlay is open.
+
+Rendering follows the established fixed-overlay approach: a normal
+double-buffered frame is begun, a dark rectangle covers the 640×448 display,
+and only compile-time inspection text is drawn before presentation. Dismissal
+returns to the exact player and viewport position with the prior transmission
+index, elapsed radio time, distance sample, and signal status unchanged. The
+inspection is repeatable and stores no inspected or persistent state. No radio,
+interaction, overlay, UI, event, or navigation framework is introduced.
+
 ## Scope
 
 The video module exposes only frame begin, filled rectangle, the single test

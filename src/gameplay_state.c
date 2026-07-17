@@ -66,6 +66,7 @@ static unsigned int radio_transmission_index;
 static float previous_radio_distance_squared;
 static int previous_radio_distance_valid;
 static unsigned int radio_signal_status;
+static int radio_inspection_open;
 
 static const char objective_activate_terminal[] =
     "Activate the relay terminal.";
@@ -126,6 +127,15 @@ static const char *const radio_signal_statuses[] = {
 };
 
 static const float radio_distance_squared_tolerance = 16.0f;
+
+static const char radio_inspection_text[] =
+    "TRANSMISSION SOURCE\n"
+    "\n"
+    "The receiver is disconnected.\n"
+    "\n"
+    "The numbers continue.\n"
+    "\n"
+    "Press CIRCLE to close.";
 
 static const char completion_text[] =
     "MISSION COMPLETE\n"
@@ -298,6 +308,14 @@ static int player_is_near_radio(void)
            RADIO_ACTIVATION_RADIUS * RADIO_ACTIVATION_RADIUS;
 }
 
+static int player_overlaps_radio_source(void)
+{
+    return ranges_overlap(player.x, player.x + player.width, radio_source.x,
+                          radio_source.x + radio_source.width) &&
+           ranges_overlap(player.y, player.y + player.height, radio_source.y,
+                          radio_source.y + radio_source.height);
+}
+
 static void update_radio(void)
 {
     float current_distance_squared = player_radio_distance_squared();
@@ -455,6 +473,7 @@ void gameplay_state_initialize(void)
     previous_radio_distance_squared = 0.0f;
     previous_radio_distance_valid = 0;
     radio_signal_status = RADIO_SIGNAL_STABLE;
+    radio_inspection_open = 0;
     update_viewport();
 }
 
@@ -476,6 +495,12 @@ void gameplay_state_update(void)
     if (completion_overlay_open) {
         if ((input_get_state()->pressed_buttons & PAD_CIRCLE) != 0) {
             completion_overlay_open = 0;
+        }
+        return;
+    }
+    if (radio_inspection_open) {
+        if ((input_get_state()->pressed_buttons & PAD_CIRCLE) != 0) {
+            radio_inspection_open = 0;
         }
         return;
     }
@@ -503,6 +528,12 @@ void gameplay_state_update(void)
             }
         }
     }
+    if (player_overlaps_radio_source() &&
+        (input_get_state()->pressed_buttons & PAD_CROSS) != 0) {
+        radio_inspection_open = 1;
+        update_viewport();
+        return;
+    }
     update_viewport();
     update_radio();
     {
@@ -521,6 +552,15 @@ void gameplay_state_render(void)
     WorldRectangle terminal_rectangle = signal_terminal.rectangle;
     WorldRectangle barrier_rectangle = signal_barrier.rectangle;
     unsigned int index;
+
+    if (radio_inspection_open) {
+        video_begin_frame();
+        video_draw_filled_rect(0.0f, 0.0f, VIEWPORT_WIDTH, VIEWPORT_HEIGHT,
+                               0x08, 0x0c, 0x10);
+        video_draw_text(4, 3, "%s", radio_inspection_text);
+        video_present_frame();
+        return;
+    }
 
     if (completion_overlay_open) {
         video_begin_frame();
@@ -578,7 +618,7 @@ void gameplay_state_render(void)
     }
 
     video_draw_text(2, 1,
-                    "Numbers Station\nMilestone 020\nRadio Direction Finder");
+                    "Numbers Station\nMilestone 021\nRadio Inspection");
     video_draw_text(2, 5, "Player world: %d, %d", (int)player.x,
                     (int)player.y);
     video_draw_text(2, 6, "Viewport: %d, %d", (int)viewport_x,
@@ -609,6 +649,9 @@ void gameplay_state_render(void)
         video_draw_text(28, 2, "%s",
                         radio_signal_statuses[radio_signal_status]);
     }
+    if (player_overlaps_radio_source()) {
+        video_draw_text(2, 13, "Press CROSS to inspect");
+    }
     player_render(&player, viewport_x, viewport_y);
     video_present_frame();
 }
@@ -635,4 +678,5 @@ void gameplay_state_shutdown(void)
     previous_radio_distance_squared = 0.0f;
     previous_radio_distance_valid = 0;
     radio_signal_status = RADIO_SIGNAL_STABLE;
+    radio_inspection_open = 0;
 }

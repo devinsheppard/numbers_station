@@ -4,9 +4,9 @@ Numbers Station is a PlayStation 2 homebrew project targeting original PS2
 hardware and PCSX2. Development is native on a Raspberry Pi 4 running Ubuntu
 26.04 ARM64. Docker, Windows, WSL, and Tyra are not part of the build workflow.
 
-Milestone 020 turns the fixed ambient radio into a direction finder. While its
-number groups are visible, a deterministic status reports whether the player is
-moving closer, farther away, or remaining at essentially the same distance.
+Milestone 021 adds a repeatable inspection interaction at the fixed radio
+source. Newly pressing Cross while overlapping it opens a fixed full-screen
+observation that Circle dismisses without changing Gameplay state.
 
 ## Requirements
 
@@ -73,7 +73,7 @@ See `docs/BUILDING.md` for verification and reproducibility details.
 - `src/main_menu_state.*` — menu display and START response
 - `src/gameplay_state.*` — Gameplay lifecycle, procedural scene, viewport,
   fixed collision, terminal/barrier interaction, three world documents, and
-  fixed objective, extraction, ambient-radio, and direction-finder sequences
+  fixed objective, extraction, radio navigation, and radio inspection sequences
 - `src/player.*` — combined digital/analog movement, world clamping, and sprite
 - `src/frame_timer.*` — elapsed gameplay frame time with stall clamping
 - `docs/` — current engineering documentation and archived milestone evidence
