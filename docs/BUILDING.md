@@ -59,11 +59,11 @@ Generated files stay below `out/` and are never used as source inputs.
 
 ## Runtime verification
 
-The Milestone 022 ELF should initially display:
+The Milestone 023 ELF should initially display:
 
 ```text
 Numbers Station
-Milestone 022
+Milestone 023
 ```
 
 After approximately three seconds it should display:
@@ -76,13 +76,13 @@ Main Menu
 Press START
 ```
 
-## PCSX2 transmission-source inspection verification
+## PCSX2 completion-return verification
 
 1. Configure a controller or keyboard mapping for PCSX2 controller port 1.
 2. Launch `out/bin/numbers_station.elf` through PCSX2's ELF loader.
 3. Confirm Splash appears immediately and Main Menu replaces it after about
    three seconds without input.
-4. Press START once and confirm Gameplay displays `Transmission Source Inspection`, player
+4. Press START once and confirm Gameplay displays `Completion Return`, player
    world X/Y, viewport X/Y, the terminal, barrier, three pale notes, existing
    obstacles, and textured player.
 5. Confirm the sprite contains a blue checkerboard, pale border and N-shaped
@@ -125,11 +125,11 @@ Press START
 20. Hold movement and Cross while the completion overlay is open. Confirm
     player, viewport, collision, terminal, barrier, documents, and objective
     progress remain frozen and the overlay stays open.
-21. Newly press Circle and confirm Gameplay resumes at the exact player and
-    viewport position without a movement jump or immediate overlay reopening.
-22. Confirm entering the source area alone never opens the overlay and holding
-    Cross before entry does not inspect it; release and newly press Cross to
-    open it again without storing persistent completion state.
+21. Newly press Circle and confirm the application returns directly to Main
+    Menu without resuming a completed Gameplay frame.
+22. Press START and confirm a fresh Gameplay entry restores the initial player,
+    viewport, terminal, barrier, document, receiver, source, objective, radio,
+    overlay, and completion-request state.
 23. Find the magenta radio marker at `(1510,1120)` and confirm it is
     viewport-relative, clipped, and non-solid.
 24. Remain outside its 180-pixel center-distance radius and confirm no radio
@@ -185,9 +185,9 @@ Press START
 47. Disconnect or disable the controller near the notes, source area, or
     radio and while either overlay is open. Confirm no accidental opening or
     dismissal, drift, crash, or hang.
-48. Confirm Gameplay remains active after repeated reading, source inspection, radio
-    reception, and inspection; rendering continues after the textured player,
-    and START does not exit it.
+48. Complete at least two Main Menu-to-Gameplay-to-completion cycles. Confirm
+    no stale transition, retained progress, input lock, black screen, rendering
+    corruption, timing jump, crash, or lockup occurs.
 
 Static ELF inspection confirms the PS2 MIPS executable format. Runtime claims
 must be recorded separately for PCSX2 and real hardware; a successful build is

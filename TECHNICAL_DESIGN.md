@@ -473,6 +473,28 @@ effect, and no return journey is required. The existing completion overlay opens
 only from that explicit source inspection. No quest, event, interaction,
 mission, persistence, or generalized progression system is introduced.
 
+## Completion return to Main Menu
+
+Milestone 023 adds one Gameplay-local `main_menu_requested` boolean and the
+narrow `gameplay_state_is_main_menu_requested()` query. Initialization and
+shutdown clear the request. Only newly pressed Circle while the existing
+completion overlay is open sets it; Circle on document and stationary-radio
+overlays retains its established local dismissal behavior, and Circle during
+normal Gameplay has no effect.
+
+The existing state manager queries the request immediately after the Gameplay
+update. When set, its existing `state_change()` path shuts Gameplay down,
+selects Main Menu, and initializes Main Menu before the same application frame
+renders. No completed Gameplay frame resumes after the request. Holding Circle
+cannot generate another edge, and the Gameplay shutdown clears the request.
+
+START follows the unchanged Main Menu request path back to Gameplay. The normal
+Gameplay initialization resets player and viewport position, terminal, barrier,
+documents, receiver confirmation and overlay, source overlap, completion
+overlay, radio timing and direction samples, and the return request. No new
+application state, transition queue, callback, event bus, scene stack,
+persistence, or generalized transition infrastructure is introduced.
+
 ## Scope
 
 The video module exposes only frame begin, filled rectangle, the single test

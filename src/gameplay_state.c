@@ -1,6 +1,7 @@
 #include "gameplay_state.h"
 
 #include <libpad.h>
+#include <stdbool.h>
 #include <stddef.h>
 
 #include "frame_timer.h"
@@ -68,6 +69,7 @@ static int previous_radio_distance_valid;
 static unsigned int radio_signal_status;
 static int radio_inspection_open;
 static int radio_source_confirmed;
+static bool main_menu_requested;
 
 static const char objective_activate_terminal[] =
     "Activate the relay terminal.";
@@ -482,6 +484,7 @@ void gameplay_state_initialize(void)
     radio_signal_status = RADIO_SIGNAL_STABLE;
     radio_inspection_open = 0;
     radio_source_confirmed = 0;
+    main_menu_requested = false;
     update_viewport();
 }
 
@@ -502,7 +505,7 @@ void gameplay_state_update(void)
     }
     if (completion_overlay_open) {
         if ((input_get_state()->pressed_buttons & PAD_CIRCLE) != 0) {
-            completion_overlay_open = 0;
+            main_menu_requested = true;
         }
         return;
     }
@@ -689,4 +692,10 @@ void gameplay_state_shutdown(void)
     radio_signal_status = RADIO_SIGNAL_STABLE;
     radio_inspection_open = 0;
     radio_source_confirmed = 0;
+    main_menu_requested = false;
+}
+
+bool gameplay_state_is_main_menu_requested(void)
+{
+    return main_menu_requested;
 }

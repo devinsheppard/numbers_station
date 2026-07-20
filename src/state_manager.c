@@ -77,6 +77,9 @@ void state_manager_update(void)
             break;
         case APPLICATION_STATE_GAMEPLAY:
             gameplay_state_update();
+            if (gameplay_state_is_main_menu_requested()) {
+                state_change(APPLICATION_STATE_MAIN_MENU);
+            }
             break;
         case APPLICATION_STATE_NONE:
             break;

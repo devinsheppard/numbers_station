@@ -2,6 +2,16 @@
 
 All notable project changes will be appended here. Do not delete previous entries.
 
+## 2026-07-17 - Milestone 023 Completion Return to Main Menu
+
+- Added one Gameplay-local Main Menu request set only by newly pressed Circle
+  on the completion overlay.
+- Routed the request through the existing state manager lifecycle so Gameplay
+  shuts down and Main Menu initializes before rendering the next frame.
+- Preserved local Circle dismissal for document and stationary-radio overlays.
+- Reused Gameplay initialization for a completely fresh session after START,
+  without new transition infrastructure or persistent completion state.
+
 ## 2026-07-17 - Milestone 022 Transmission Source Inspection
 
 - Distinguished the stationary radio receiver from the cyan transmission-source
