@@ -560,6 +560,26 @@ menu framework is added. Gameplay initialization and shutdown continue clearing
 both `main_menu_requested` and `gameplay_paused`, so START from Main Menu enters
 the same fully reset Gameplay session established by Milestone 023.
 
+## Main Menu controls screen
+
+Milestone 026 adds one private `controls_open` boolean to `main_menu_state.c`.
+Main Menu initialization and shutdown clear it, so entry from Splash, Gameplay
+completion, or pause exit always starts at the ordinary menu. No flag is exposed
+through the header or state manager.
+
+When controls are closed, newly pressed Triangle sets `controls_open`; an
+`else if` preserves the existing newly pressed START Gameplay request and gives
+Triangle priority if both edges occur in the same update. When controls are
+open, the update checks only newly pressed Circle, clears the flag when present,
+and returns. START, Triangle, Cross, and unrelated buttons therefore cannot
+change state or initialize Gameplay while the controls screen owns input.
+
+Rendering selects between two fixed compile-time text blocks inside the existing
+Main Menu frame lifecycle. The controls screen lists movement, interaction,
+overlay dismissal, and pause inputs. It adds no application state, persistent
+state, selection cursor, menu framework, modal framework, texture, or renderer
+change.
+
 ## Scope
 
 The video module exposes only frame begin, filled rectangle, the single test

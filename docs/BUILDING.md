@@ -59,12 +59,12 @@ Generated files stay below `out/` and are never used as source inputs.
 
 ## Runtime verification
 
-The Milestone 025 ELF should initially display `Numbers Station` and
+The Milestone 026 ELF should initially display `Numbers Station` and
 `Milestone 009`. After approximately three seconds it should display the normal
 Main Menu and `Press START` prompt. The temporary red and green isolation markers
 have been removed.
 
-## PCSX2 pause-return verification
+## PCSX2 Main Menu controls verification
 
 1. Configure a controller or keyboard mapping for PCSX2 controller port 1.
 2. Launch `out/bin/numbers_station.elf` through PCSX2's ELF loader.
@@ -202,6 +202,20 @@ have been removed.
 58. Confirm held Circle does not leak into pause or Main Menu, Circle remains
     inactive during ordinary Gameplay, and document, receiver, and completion
     overlays retain their established Circle behavior.
+59. On the ordinary Main Menu, confirm `Press START to begin` and `Press TRIANGLE
+    for controls` remain continuously visible and stable.
+60. Newly press Triangle and confirm the fixed controls screen lists D-pad/left
+    stick movement, Cross interaction, Circle overlay dismissal, START pause and
+    resume, and the Circle return instruction.
+61. While controls are open, confirm START, Triangle, Cross, and unrelated
+    buttons do nothing. Newly press Circle and confirm only the ordinary Main
+    Menu returns.
+62. Newly press START from the ordinary Main Menu and confirm fresh Gameplay
+    initialization remains unchanged. If Triangle and START are newly pressed in
+    the same update, confirm Triangle takes priority.
+63. Return to Main Menu from completion and pause exit. Confirm controls begin
+    closed after each entry and after repeated menu/gameplay cycles, with no held
+    input leakage, stale modal state, flicker, corruption, crash, or lockup.
 
 Static ELF inspection confirms the PS2 MIPS executable format. Runtime claims
 must be recorded separately for PCSX2 and real hardware; a successful build is

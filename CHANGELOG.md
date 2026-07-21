@@ -2,6 +2,15 @@
 
 All notable project changes will be appended here. Do not delete previous entries.
 
+## 2026-07-21 - Milestone 026 Main Menu Controls Screen
+
+- Added one Main Menu-local controls-screen flag reset by normal initialization
+  and shutdown.
+- Added newly pressed Triangle open and Circle close behavior with exclusive
+  modal input handling and Triangle priority over START.
+- Displayed the established movement, interaction, overlay, and pause controls
+  through the existing stable active-framebuffer text renderer.
+
 ## 2026-07-21 - Milestone 025 Pause Return to Main Menu
 
 - Added newly pressed Circle handling to the existing Gameplay pause overlay.

@@ -4,9 +4,9 @@ Numbers Station is a PlayStation 2 homebrew project targeting original PS2
 hardware and PCSX2. Development is native on a Raspberry Pi 4 running Ubuntu
 26.04 ARM64. Docker, Windows, WSL, and Tyra are not part of the build workflow.
 
-Milestone 025 connects the Gameplay-local pause overlay to the existing Main
-Menu request. Newly pressed START resumes paused Gameplay, while newly pressed
-Circle returns to Main Menu through the established state lifecycle.
+Milestone 026 adds one fixed controls screen to Main Menu. Newly pressed
+Triangle opens it, newly pressed Circle returns to the ordinary Main Menu, and
+START retains its established fresh-Gameplay behavior while controls are closed.
 
 ## Requirements
 
@@ -70,7 +70,7 @@ See `docs/BUILDING.md` for verification and reproducibility details.
   diagnostic text
 - `src/state_manager.*` — active-state ownership and transitions
 - `src/splash_state.*` — timed launch screen
-- `src/main_menu_state.*` — menu display and START response
+- `src/main_menu_state.*` — menu display, fixed controls screen, and START response
 - `src/gameplay_state.*` — Gameplay lifecycle, procedural scene, viewport,
   fixed collision, terminal/barrier interaction, three world documents, and
   fixed objective, radio reception and inspection, transmission-source
