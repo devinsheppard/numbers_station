@@ -2,6 +2,14 @@
 
 All notable project changes will be appended here. Do not delete previous entries.
 
+## 2026-07-21 - Milestone 025 Pause Return to Main Menu
+
+- Added newly pressed Circle handling to the existing Gameplay pause overlay.
+- Reused the established `main_menu_requested` state-manager path without a new
+  transition, reset path, application state, or menu system.
+- Preserved START resume behavior and exclusive document, receiver, and
+  completion-overlay input handling.
+
 ## 2026-07-20 - Milestone 024 Gameplay Pause Overlay
 
 - Added one Gameplay-local pause flag toggled by newly pressed START during

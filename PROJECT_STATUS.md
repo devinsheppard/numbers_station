@@ -2,10 +2,10 @@
 
 ## Current milestone
 
-Milestone 024: Gameplay Pause and Stable Text Rendering is complete and has
-passed external runtime validation through the established Batocera
-EmulationStation/BUA PCSX2 launch path. Milestones 002 through 024 are complete.
-Milestone 025 has not started and remains pending approval.
+Milestone 025: Pause Return to Main Menu is complete and has passed external
+runtime validation through the established Batocera EmulationStation/BUA PCSX2
+launch path. Milestones 002 through 025 are complete. Milestone 026 has not
+started and remains pending approval.
 
 ## Validated capabilities
 
@@ -18,7 +18,9 @@ Milestone 025 has not started and remains pending approval.
 - Gameplay-local pause toggled by newly pressed START during ordinary Gameplay.
   Simulation, interactions, viewport, objectives, and radio processing freeze
   while the frame-time baseline continues refreshing; resume preserves state
-  without a timing or movement jump. Existing overlays retain input precedence.
+  without a timing or movement jump. Newly pressed Circle while paused returns
+  through the existing Main Menu request and lifecycle. Existing overlays retain
+  input precedence.
 - Stable double-buffered world, texture, overlay, and text presentation.
 
 ## Renderer constraints

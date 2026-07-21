@@ -59,18 +59,18 @@ Generated files stay below `out/` and are never used as source inputs.
 
 ## Runtime verification
 
-The Milestone 024 ELF should initially display `Numbers Station` and
+The Milestone 025 ELF should initially display `Numbers Station` and
 `Milestone 009`. After approximately three seconds it should display the normal
 Main Menu and `Press START` prompt. The temporary red and green isolation markers
 have been removed.
 
-## PCSX2 Gameplay-pause verification
+## PCSX2 pause-return verification
 
 1. Configure a controller or keyboard mapping for PCSX2 controller port 1.
 2. Launch `out/bin/numbers_station.elf` through PCSX2's ELF loader.
 3. Confirm Splash appears immediately and Main Menu replaces it after about
    three seconds without input.
-4. Press START once and confirm Gameplay displays `Gameplay Pause Overlay`, player
+4. Press START once and confirm Gameplay displays `Pause Return to Main Menu`, player
    world X/Y, viewport X/Y, the terminal, barrier, three pale notes, existing
    obstacles, and textured player.
 5. Confirm the sprite contains a blue checkerboard, pale border and N-shaped
@@ -192,6 +192,16 @@ have been removed.
     Gameplay diagnostics, documents, receiver, completion, and pause text stay
     continuously visible without alternating-frame disappearance, stale glyphs,
     GS-state damage, or rendering corruption.
+55. Pause ordinary Gameplay and confirm the panel displays both `Press START to
+    resume` and `Press CIRCLE for Main Menu`.
+56. Newly press Circle while paused. Confirm Main Menu is rendered next without
+    a resumed Gameplay frame or repeated transition.
+57. Press START from Main Menu and confirm a fresh Gameplay session resets all
+    position, viewport, progression, interaction, overlay, radio, objective,
+    pause, and request state.
+58. Confirm held Circle does not leak into pause or Main Menu, Circle remains
+    inactive during ordinary Gameplay, and document, receiver, and completion
+    overlays retain their established Circle behavior.
 
 Static ELF inspection confirms the PS2 MIPS executable format. Runtime claims
 must be recorded separately for PCSX2 and real hardware; a successful build is

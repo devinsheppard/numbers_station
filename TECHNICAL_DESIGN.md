@@ -539,6 +539,27 @@ selected framebuffer, so text and world geometry share the draw target before
 the normal GS completion, vertical blank, and swap. No texture, font VRAM,
 runtime file, BIOS font, blending state, or additional draw context is added.
 
+## Pause return to Main Menu
+
+Milestone 025 extends only the existing `gameplay_paused` input branch. Newly
+pressed Circle sets the established `main_menu_requested` flag and returns from
+the Gameplay update without resuming simulation. The unchanged state manager
+observes that request immediately after the update, shuts Gameplay down through
+its normal lifecycle, and initializes Main Menu before rendering the frame.
+
+Newly pressed START still clears `gameplay_paused` and resumes Gameplay. Circle
+is checked first while paused, so a simultaneous newly pressed Circle and START
+requests Main Menu rather than briefly resuming. Held buttons do not repeat
+because both actions use `pressed_buttons`. Document, completion, and receiver
+overlay branches remain ahead of pause handling and retain their existing Circle
+semantics.
+
+The pause overlay now shows both controls. No transition interface, reset logic,
+confirmation dialog, retained progress, save behavior, application state, or
+menu framework is added. Gameplay initialization and shutdown continue clearing
+both `main_menu_requested` and `gameplay_paused`, so START from Main Menu enters
+the same fully reset Gameplay session established by Milestone 023.
+
 ## Scope
 
 The video module exposes only frame begin, filled rectangle, the single test

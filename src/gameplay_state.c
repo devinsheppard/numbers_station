@@ -518,7 +518,9 @@ void gameplay_state_update(void)
         return;
     }
     if (gameplay_paused) {
-        if ((input_get_state()->pressed_buttons & PAD_START) != 0) {
+        if ((input_get_state()->pressed_buttons & PAD_CIRCLE) != 0) {
+            main_menu_requested = true;
+        } else if ((input_get_state()->pressed_buttons & PAD_START) != 0) {
             gameplay_paused = false;
         }
         return;
@@ -639,7 +641,7 @@ void gameplay_state_render(void)
     }
 
     video_draw_text(2, 1,
-                    "Numbers Station\nMilestone 024\nGameplay Pause Overlay");
+                    "Numbers Station\nMilestone 025\nPause Return to Main Menu");
     video_draw_text(2, 5, "Player world: %d, %d", (int)player.x,
                     (int)player.y);
     video_draw_text(2, 6, "Viewport: %d, %d", (int)viewport_x,
@@ -680,7 +682,9 @@ void gameplay_state_render(void)
     if (gameplay_paused) {
         video_draw_filled_rect(120.0f, 130.0f, 400.0f, 180.0f,
                                0x08, 0x0c, 0x10);
-        video_draw_text(26, 13, "PAUSED\n\nPress START to resume");
+        video_draw_text(24, 12,
+                        "PAUSED\n\nPress START to resume\n"
+                        "Press CIRCLE for Main Menu");
     }
     video_present_frame();
 }
