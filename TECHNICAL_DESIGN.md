@@ -92,10 +92,12 @@ draw primitives and diagnostic text
 video_present_frame
 ```
 
-`video_begin_frame` clears only the active draw buffer. Rectangle and clear
-operations reuse one 64-qword packet and complete before that packet is reused.
-PS2SDK debug text draws through the currently selected GS drawing context, so
-it lands in the same hidden buffer as the primitives.
+`video_begin_frame` clears only the active draw buffer. Rectangle, clear, and
+bitmap-text operations reuse one fixed 512-qword packet and complete before that
+packet is reused. Text uses PS2SDK's existing 8x8 MSX bitmap data. Each occupied
+horizontal glyph run becomes a one-pixel-high `draw_rect_filled` primitive,
+batched with reserved packet space and submitted through the active libdraw
+context.
 
 `video_present_frame` performs:
 
@@ -159,8 +161,7 @@ current viewport with local min/max calculations, then submits only its visible
 screen-space portion through the existing filled-rectangle function. No map,
 collision, terrain, asset, scene, or generalized clipping system is present.
 
-Gameplay diagnostics report only player world X/Y and viewport X/Y. The known
-libdebug framebuffer-zero flicker remains outside this milestone.
+Gameplay diagnostics report only player world X/Y and viewport X/Y.
 
 ## Left analog-stick movement
 
@@ -494,6 +495,49 @@ documents, receiver confirmation and overlay, source overlap, completion
 overlay, radio timing and direction samples, and the return request. No new
 application state, transition queue, callback, event bus, scene stack,
 persistence, or generalized transition infrastructure is introduced.
+
+## Gameplay pause overlay
+
+Milestone 024 adds one Gameplay-local `gameplay_paused` boolean. Initialization
+and shutdown explicitly clear it. After the document, completion, and stationary
+receiver overlay branches have handled input, newly pressed START toggles pause
+during ordinary Gameplay. Those existing overlays therefore retain exclusive
+input ownership and cannot open or toggle pause.
+
+Every paused update still calls `frame_timer_update()`, then handles only newly
+pressed START and returns before player movement, collision, viewport changes,
+terminal and document interactions, receiver and source interactions, objective
+progression, radio timing, transmission advancement, distance sampling, or
+signal comparison. Refreshing the existing timer baseline prevents elapsed
+pause time from becoming a resume-frame delta.
+
+Rendering continues through the normal world path. After the textured player is
+drawn, a fixed dark central panel and compile-time pause text are submitted before
+the normal frame presentation. The surrounding scene remains visible, and no
+texture, video, framebuffer, state-manager, input, timing, overlay, or UI
+architecture is added.
+
+Renderer experiments intended to address the pre-existing text flicker caused
+startup and black-screen regressions and were removed before the final
+correction. The externally verified Milestone 023 renderer was the baseline.
+Temporary red Splash and green Main Menu markers were also removed.
+
+Packet inspection confirms that `init_scr` independently configures a
+framebuffer-zero drawing environment. More importantly, each `scr_putchar`
+packet performs a host-to-local glyph transfer whose `BITBLTBUF` destination
+base is fixed at VRAM word zero with a 640-pixel destination width. The transfer
+therefore ignores `draw_buffer_index`, even if `FRAME_1` is restored afterward.
+World primitives were drawn into alternating framebuffer 0 and framebuffer 1,
+while text was redrawn only into framebuffer 0. Display alternation made that
+text disappear on every framebuffer-1 frame.
+
+The final correction retains `init_scr` in the known-working startup sequence
+but does not call `scr_vprintf` or `scr_putchar`. `video_draw_text` formats into
+a fixed buffer, reads the same linked MSX bitmap, and submits only filled
+horizontal glyph runs through libdraw. Those primitives inherit the currently
+selected framebuffer, so text and world geometry share the draw target before
+the normal GS completion, vertical blank, and swap. No texture, font VRAM,
+runtime file, BIOS font, blending state, or additional draw context is added.
 
 ## Scope
 

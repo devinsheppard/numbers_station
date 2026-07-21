@@ -59,30 +59,18 @@ Generated files stay below `out/` and are never used as source inputs.
 
 ## Runtime verification
 
-The Milestone 023 ELF should initially display:
+The Milestone 024 ELF should initially display `Numbers Station` and
+`Milestone 009`. After approximately three seconds it should display the normal
+Main Menu and `Press START` prompt. The temporary red and green isolation markers
+have been removed.
 
-```text
-Numbers Station
-Milestone 023
-```
-
-After approximately three seconds it should display:
-
-```text
-Numbers Station
-
-Main Menu
-
-Press START
-```
-
-## PCSX2 completion-return verification
+## PCSX2 Gameplay-pause verification
 
 1. Configure a controller or keyboard mapping for PCSX2 controller port 1.
 2. Launch `out/bin/numbers_station.elf` through PCSX2's ELF loader.
 3. Confirm Splash appears immediately and Main Menu replaces it after about
    three seconds without input.
-4. Press START once and confirm Gameplay displays `Completion Return`, player
+4. Press START once and confirm Gameplay displays `Gameplay Pause Overlay`, player
    world X/Y, viewport X/Y, the terminal, barrier, three pale notes, existing
    obstacles, and textured player.
 5. Confirm the sprite contains a blue checkerboard, pale border and N-shaped
@@ -188,6 +176,22 @@ Press START
 48. Complete at least two Main Menu-to-Gameplay-to-completion cycles. Confirm
     no stale transition, retained progress, input lock, black screen, rendering
     corruption, timing jump, crash, or lockup occurs.
+49. During ordinary Gameplay, newly press START and confirm a dark panel displays
+    `PAUSED` and `Press START to resume` over the still-visible world.
+50. While paused, hold movement and press Cross or Circle. Confirm player,
+    viewport, collision, interactions, objective, and radio state remain frozen.
+51. Wait several seconds, newly press START, and confirm exact position and state
+    resume without a movement, viewport, timing, or transmission jump.
+52. Press START while a document, stationary receiver, or completion overlay is
+    open and confirm pause does not open or toggle. Confirm their existing Circle
+    behavior remains unchanged.
+53. Return to Main Menu through completion, press START, and confirm the fresh
+    Gameplay entry is unpaused. Repeat pause/resume and full completion cycles
+    without stale state, repeated toggles, corruption, crash, or lockup.
+54. Confirm no red or green isolation marker remains. Verify Splash, Main Menu,
+    Gameplay diagnostics, documents, receiver, completion, and pause text stay
+    continuously visible without alternating-frame disappearance, stale glyphs,
+    GS-state damage, or rendering corruption.
 
 Static ELF inspection confirms the PS2 MIPS executable format. Runtime claims
 must be recorded separately for PCSX2 and real hardware; a successful build is

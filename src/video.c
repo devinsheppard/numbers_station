@@ -7,20 +7,28 @@
 #include <gs_psm.h>
 #include <packet.h>
 #include <stdarg.h>
+#include <stdio.h>
 
 extern void SyncDCache(void *start, void *end);
+extern const unsigned char msx[];
 
 enum {
     VIDEO_WIDTH = 640,
     VIDEO_HEIGHT = 448,
     FRAMEBUFFER_COUNT = 2,
-    DRAW_PACKET_QWORDS = 64,
+    DRAW_PACKET_QWORDS = 512,
     TEXTURE_UPLOAD_PACKET_QWORDS = 64,
     TEST_TEXTURE_WIDTH = 32,
     TEST_TEXTURE_HEIGHT = 32,
     TEST_TEXTURE_STORAGE_WIDTH = 64,
     TEST_TEXTURE_PIXEL_COUNT =
-        TEST_TEXTURE_STORAGE_WIDTH * TEST_TEXTURE_HEIGHT
+        TEST_TEXTURE_STORAGE_WIDTH * TEST_TEXTURE_HEIGHT,
+    FONT_FIRST_CHARACTER = 32,
+    FONT_CHARACTER_COUNT = 96,
+    FONT_GLYPH_WIDTH = 8,
+    FONT_GLYPH_HEIGHT = 8,
+    TEXT_FORMAT_BUFFER_SIZE = 1024,
+    TEXT_PACKET_RESERVED_QWORDS = 8
 };
 
 static framebuffer_t framebuffers[FRAMEBUFFER_COUNT];
@@ -323,7 +331,7 @@ void video_draw_test_sprite(float x, float y, float width, float height)
     rectangle.color.a = 0x80;
     rectangle.color.q = 1.0f;
 
-    /* Debug-font drawing changes texture state, so bind immediately before use. */
+    /* Bind immediately before use so prior primitive state cannot affect it. */
     q = draw_texture_sampling(q, 0, &lod);
     q = draw_texture_wrapping(q, 0, &wrap);
     q = draw_texturebuffer(q, 0, &test_texture, &clut);
@@ -338,12 +346,85 @@ void video_draw_test_sprite(float x, float y, float width, float height)
 
 void video_draw_text(int x, int y, const char *format, ...)
 {
+    char text[TEXT_FORMAT_BUFFER_SIZE];
+    float origin_x = (float)(x * FONT_GLYPH_WIDTH);
+    float cursor_x = origin_x;
+    float cursor_y = (float)(y * FONT_GLYPH_HEIGHT);
+    const unsigned char *character;
+    qword_t *q = draw_packet->data;
     va_list arguments;
 
-    scr_setXY(x, y);
     va_start(arguments, format);
-    scr_vprintf(format, arguments);
+    vsnprintf(text, sizeof(text), format, arguments);
     va_end(arguments);
+
+    for (character = (const unsigned char *)text; *character != '\0';
+         ++character) {
+        unsigned int glyph = *character;
+        int row;
+
+        if (glyph == '\n') {
+            cursor_x = origin_x;
+            cursor_y += FONT_GLYPH_HEIGHT;
+            continue;
+        }
+
+        if (glyph < FONT_FIRST_CHARACTER ||
+            glyph >= FONT_FIRST_CHARACTER + FONT_CHARACTER_COUNT) {
+            glyph = '?';
+        }
+
+        for (row = 0; row < FONT_GLYPH_HEIGHT; ++row) {
+            unsigned char bits = msx[glyph * FONT_GLYPH_HEIGHT + row];
+            int column = 0;
+
+            while (column < FONT_GLYPH_WIDTH) {
+                int run_start;
+                rect_t rectangle;
+
+                while (column < FONT_GLYPH_WIDTH &&
+                       (bits & (0x80u >> column)) == 0) {
+                    ++column;
+                }
+                if (column == FONT_GLYPH_WIDTH) {
+                    break;
+                }
+
+                run_start = column;
+                while (column < FONT_GLYPH_WIDTH &&
+                       (bits & (0x80u >> column)) != 0) {
+                    ++column;
+                }
+
+                if (q - draw_packet->data >=
+                    DRAW_PACKET_QWORDS - TEXT_PACKET_RESERVED_QWORDS) {
+                    q = draw_finish(q);
+                    submit_packet(q);
+                    q = draw_packet->data;
+                }
+
+                rectangle.v0.x = cursor_x + run_start;
+                rectangle.v0.y = cursor_y + row;
+                rectangle.v0.z = 0;
+                rectangle.v1.x = cursor_x + column;
+                rectangle.v1.y = cursor_y + row + 1.0f;
+                rectangle.v1.z = 0;
+                rectangle.color.r = 0xff;
+                rectangle.color.g = 0xff;
+                rectangle.color.b = 0xff;
+                rectangle.color.a = 0x80;
+                rectangle.color.q = 1.0f;
+                q = draw_rect_filled(q, 0, &rectangle);
+            }
+        }
+
+        cursor_x += FONT_GLYPH_WIDTH;
+    }
+
+    if (q != draw_packet->data) {
+        q = draw_finish(q);
+        submit_packet(q);
+    }
 }
 
 void video_present_frame(void)

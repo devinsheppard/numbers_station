@@ -2,6 +2,18 @@
 
 All notable project changes will be appended here. Do not delete previous entries.
 
+## 2026-07-20 - Milestone 024 Gameplay Pause Overlay
+
+- Added one Gameplay-local pause flag toggled by newly pressed START during
+  ordinary Gameplay.
+- Froze simulation, interactions, objectives, viewport, and radio progression
+  while continuing to refresh the established frame-time baseline.
+- Rendered a fixed dark pause panel over the still-visible Gameplay scene.
+- Replaced fixed-framebuffer libdebug glyph transfers with horizontal bitmap
+  runs submitted through the active libdraw framebuffer.
+- Preserved exclusive document, receiver, and completion-overlay input behavior
+  without changing the state manager or introducing a pause framework.
+
 ## 2026-07-17 - Milestone 023 Completion Return to Main Menu
 
 - Added one Gameplay-local Main Menu request set only by newly pressed Circle
