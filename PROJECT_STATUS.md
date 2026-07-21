@@ -2,16 +2,17 @@
 
 ## Current milestone
 
-Milestone 026: Main Menu Controls Screen is complete and has passed external
+Milestone 027: Main Menu Mission Briefing is complete and has passed external
 runtime validation through the established Batocera EmulationStation/BUA PCSX2
-launch path. Milestones 002 through 026 are complete. Milestone 027 has not
+launch path. Milestones 002 through 027 are complete. Milestone 028 has not
 started and remains pending approval.
 
 ## Validated capabilities
 
 - Splash, Main Menu, Gameplay entry, completion return to Main Menu, and fresh
   Gameplay-session reset. Main Menu includes a fixed, local controls screen
-  opened with newly pressed Triangle and closed with newly pressed Circle.
+  opened with newly pressed Triangle and a fixed mission briefing opened with
+  newly pressed Square; newly pressed Circle closes either local screen.
 - D-pad and analog movement, collision, wall sliding, viewport scrolling,
   textured player rendering, terminal and barrier progression, three readable
   documents, fixed objectives, stationary receiver broadcasts and inspection,

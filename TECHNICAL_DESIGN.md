@@ -580,6 +580,25 @@ overlay dismissal, and pause inputs. It adds no application state, persistent
 state, selection cursor, menu framework, modal framework, texture, or renderer
 change.
 
+## Main Menu mission briefing
+
+Milestone 027 adds one private `briefing_open` boolean beside the existing
+`controls_open` flag in `main_menu_state.c`. Initialization and shutdown clear
+both. Opening either modal explicitly clears the other flag, so controls and the
+briefing cannot coexist even if future local code changes their call context.
+
+An open controls or briefing screen processes only newly pressed Circle and
+returns before ordinary Main Menu input. With both closed, newly pressed input
+uses a fixed `else if` priority: Triangle opens controls, Square opens the
+briefing, then START retains the existing Gameplay request. This defines every
+same-update button combination without toggles or held-state behavior.
+
+The briefing is one fixed compile-time text block summarizing the already
+implemented relay, field-record, and transmission-source sequence. It is drawn
+through the unchanged Main Menu begin/draw/present lifecycle and creates no
+Gameplay state, objective, story detail, persistence, application state, menu
+framework, or rendering abstraction.
+
 ## Scope
 
 The video module exposes only frame begin, filled rectangle, the single test

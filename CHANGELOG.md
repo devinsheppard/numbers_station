@@ -2,6 +2,14 @@
 
 All notable project changes will be appended here. Do not delete previous entries.
 
+## 2026-07-21 - Milestone 027 Main Menu Mission Briefing
+
+- Added one private Main Menu briefing flag reset by initialization and shutdown.
+- Added newly pressed Square opening and Circle closing with exclusive modal
+  input and deterministic Triangle, Square, then START priority.
+- Added a fixed nonpersistent briefing summarizing the existing objective
+  sequence without changing Gameplay progression or story canon.
+
 ## 2026-07-21 - Milestone 026 Main Menu Controls Screen
 
 - Added one Main Menu-local controls-screen flag reset by normal initialization

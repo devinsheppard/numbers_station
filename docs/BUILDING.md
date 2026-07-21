@@ -59,12 +59,12 @@ Generated files stay below `out/` and are never used as source inputs.
 
 ## Runtime verification
 
-The Milestone 026 ELF should initially display `Numbers Station` and
+The Milestone 027 ELF should initially display `Numbers Station` and
 `Milestone 009`. After approximately three seconds it should display the normal
 Main Menu and `Press START` prompt. The temporary red and green isolation markers
 have been removed.
 
-## PCSX2 Main Menu controls verification
+## PCSX2 Main Menu briefing verification
 
 1. Configure a controller or keyboard mapping for PCSX2 controller port 1.
 2. Launch `out/bin/numbers_station.elf` through PCSX2's ELF loader.
@@ -216,6 +216,19 @@ have been removed.
 63. Return to Main Menu from completion and pause exit. Confirm controls begin
     closed after each entry and after repeated menu/gameplay cycles, with no held
     input leakage, stale modal state, flicker, corruption, crash, or lockup.
+64. Confirm the ordinary Main Menu adds `Press SQUARE for briefing` while the
+    existing START and Triangle instructions remain stable.
+65. Newly press Square and confirm the fixed mission briefing summarizes relay
+    access, field records beyond the barrier, and locating the transmission
+    source without additional story details.
+66. While briefing is open, confirm START, Triangle, Square, Cross, and unrelated
+    buttons do nothing. Newly press Circle and confirm only the ordinary menu
+    returns.
+67. Confirm Triangle plus Square prioritizes controls, Triangle plus START
+    prioritizes controls, Square plus START prioritizes briefing, and all three
+    prioritizes controls when the edges occur in one update.
+68. Confirm controls and briefing never coexist and both begin closed after
+    Splash, completion return, pause return, and repeated Gameplay cycles.
 
 Static ELF inspection confirms the PS2 MIPS executable format. Runtime claims
 must be recorded separately for PCSX2 and real hardware; a successful build is
